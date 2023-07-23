@@ -1,0 +1,5 @@
+{
+  "deno.enablePaths": [
+    "template/scripts"
+  ]
+}

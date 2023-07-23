@@ -1,0 +1,25 @@
+{
+  "id": "dev.__themeAuthor__.__themeName__",
+  "name": "__themeName__",
+  "author": [
+    {
+      "name": "__themeAuthor__",
+      "github": "__themeAuthor__"
+    },
+    {
+      "name": "wathhr",
+      "github": "wathhr"
+    }
+  ],
+
+  "description": "__themeDescription__",
+  "version": "__themeVersion__",
+  "license": "GPL-3.0-or-later",
+
+  "main": "dist/__themeName__.theme.css",
+  "updater": {
+    "type": "github",
+    "id": "__themeAuthor__/__themeName__"
+  },
+  "type": "replugged-theme"
+}

@@ -1,0 +1,36 @@
+{
+  "name": "@walter-org/create-theme",
+  "author": "wathhr",
+  "version": "0.0.1",
+  "description": "A template for creating Discord themes.",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node dist/bin.js",
+    "build": "node scripts/build.js",
+    "watch": "node scripts/build.js --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.1",
+    "@types/node": "^20.3.3",
+    "@typescript-eslint/eslint-plugin": "^5.60.1",
+    "@typescript-eslint/parser": "^5.60.1",
+    "esbuild": "^0.18.11",
+    "eslint": "^8.44.0"
+  },
+  "dependencies": {
+    "fs-extra": "^11.1.1"
+  },
+  "bin": "dist/bin.js",
+  "files": [
+    "dist",
+    "template"
+  ],
+  "keywords": [
+    "discord",
+    "betterdiscord",
+    "theme"
+  ]
+}

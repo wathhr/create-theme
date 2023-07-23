@@ -1,0 +1,6 @@
+{
+  "id": "__themeAuthor__.__themeName__",
+  "description": "__themeDescription__",
+  "main": "dist/__themeName__.theme.css",
+  "splash": "dist/splash.css"
+}
