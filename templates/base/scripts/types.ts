@@ -1,8 +1,9 @@
-type ThemeConfig = {
+export type ThemeConfig = {
   name: string,
   description: string,
   author: string,
   version: string,
+  inputFile?: string,
 };
 
 export type ClientExport = (config: ThemeConfig) => {

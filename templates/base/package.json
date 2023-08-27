@@ -1,4 +1,8 @@
 {
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
   "dependencies": {
     "@electron/asar": "^3.2.4",
     "arg": "^5.0.2"

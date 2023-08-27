@@ -1,8 +1,8 @@
 type ArgumentValue = OptionalReadonly<string | boolean | (string | boolean)[]>;
 
 type RegisteredOpt = {
-  prompted: boolean;
-  value: ArgumentValue;
+  prompted: boolean,
+  value: ArgumentValue,
 };
 
 type ExtraOptionData = {
@@ -20,10 +20,11 @@ type ExtraOptionData = {
 });
 
 type ThemeConfig = {
-  name: string;
-  description: string;
-  author: string;
-  version: string;
+  name: string,
+  description: string,
+  author: string,
+  version: string,
+  inputFile?: string,
 };
 
 type OptionalReadonly<T> = Readonly<T> | T;

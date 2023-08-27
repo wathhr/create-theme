@@ -3,8 +3,22 @@ import { copy, ensureDir, exists } from "../node_modules/fs-extra/lib/index.js";
 import { join as join3 } from "node:path";
 import { parseArgs } from "node:util";
 import { spawnSync } from "node:child_process";
+import { readdir as readdir2, writeFile as writeFile2 } from "node:fs/promises";
 import commandExists from "../node_modules/command-exists/index.js";
 import { intro, outro, spinner as spinnerInit } from "../node_modules/@clack/prompts/dist/index.mjs";
+
+// src/utils/combineJson.ts
+import { createRequire } from "module";
+import deepMerge from "../node_modules/ts-deepmerge/esm/index.js";
+var require2 = createRequire(import.meta.url);
+function combineJson(...files) {
+  const objects = files.map((file) => require2(file));
+  try {
+    return JSON.stringify(deepMerge(...objects), null, 2);
+  } catch (e) {
+    throw new Error(`Failed to combine JSON files [${files}]:`, e);
+  }
+}
 
 // src/utils/manageOpts.ts
 import * as clack from "../node_modules/@clack/prompts/dist/index.mjs";
@@ -163,14 +177,14 @@ async function register(name, arg) {
 import { readFile, writeFile } from "node:fs/promises";
 async function replaceMeta(file) {
   const content = await readFile(file, "utf8").catch((e) => {
-    throw new Error(`Failed to read file, "${file}"`, e);
+    throw new Error(`Failed to read "${file}":`, e);
   });
   const regex = new RegExp(`__theme(${requiredConfigKeys.map((key) => key[0].toUpperCase() + key.slice(1)).join("|")})__`, "g");
   const newContent = content.replace(regex, (_, group) => {
     return (registeredOpts.get(group.toLowerCase())?.value ?? extraOptionData[group].default).toString();
   });
   await writeFile(file, newContent).catch((e) => {
-    throw new Error(`Failed to write file, "${file}"`, e);
+    throw new Error(`Failed to write file "${file}":`, e);
   });
 }
 
@@ -189,33 +203,41 @@ for (const o in options) {
 var spinner = spinnerInit();
 spinner.start();
 spinner.message("Copying project files...");
-var path = join3(process.cwd(), registeredOpts.get("name").value.toString());
-await ensureDir(path);
-await copy(join3(root, "templates/base"), path, {
+var themePath = join3(process.cwd(), registeredOpts.get("name").value.toString());
+var languageTemplate = join3(root, "templates", registeredOpts.get("language").value.toString());
+var baseTemplate = join3(root, "templates/base");
+await ensureDir(themePath);
+await copy(baseTemplate, themePath, {
   overwrite: false,
   errorOnExist: true
 });
-await copy(join3(root, "templates", registeredOpts.get("language").value.toString()), path);
+await copy(languageTemplate, themePath);
+(await readdir2(languageTemplate, { withFileTypes: true })).forEach(async (file) => {
+  if (!(file.name.endsWith(".json") && file.isFile() && exists(join3(languageTemplate, file.name))))
+    return;
+  await writeFile2(
+    join3(themePath, file.name),
+    combineJson(join3(baseTemplate, file.name), join3(languageTemplate, file.name))
+  );
+});
 spinner.message("Replacing metadata...");
 for (const file of metaFiles) {
-  const filePath = join3(path, file);
+  const filePath = join3(themePath, file);
   if (!exists(filePath))
     continue;
   await replaceMeta(filePath);
 }
-if (exists(join3(path, "package.json"))) {
-  spinner.message("Installing packages...");
-  const packageManagers = ["yarn", "pnpm", "npm"];
-  const opts = { cwd: path };
-  if (process.env.npm_execpath) {
-    spawnSync(process.env.npm_execpath, ["install"], opts);
-    packageManagers.length = 0;
-  }
-  for (const pm of packageManagers) {
-    if (commandExists.sync(pm)) {
-      spawnSync(pm, ["install"], opts);
-      break;
-    }
+spinner.message("Installing packages...");
+var packageManagers = ["yarn", "pnpm", "npm"];
+var opts = { cwd: themePath };
+if (process.env.npm_execpath) {
+  spawnSync(process.env.npm_execpath, ["install"], opts);
+  packageManagers.length = 0;
+}
+for (const pm of packageManagers) {
+  if (commandExists.sync(pm)) {
+    spawnSync(pm, ["install"], opts);
+    break;
   }
 }
 spinner.stop();

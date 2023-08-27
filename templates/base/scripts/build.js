@@ -5,11 +5,13 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
-import { realpath, rm, writeFile } from 'node:fs/promises';
+import { mkdir, realpath, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import arg from 'arg';
 import asar from '@electron/asar';
 
 const require = createRequire(import.meta.url);
+/** @type {import('./types').ThemeConfig} */
 const config = require('../theme.config.json');
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,8 +26,8 @@ const args = arg({
 });
 
 const defaults = {
-  input: args._.at(-1) ?? join(__dirname, '../src/index.scss'),
-  output: join(__dirname, '../dist/'),
+  input: args._.at(-1) ?? config.inputFile ?? join(root, 'src/index.scss'),
+  output: join(root, 'dist/'),
   clients: ['all'],
   watch: false
 };
@@ -37,21 +39,26 @@ const values = {
 const clientExports = await import('./clients.js') ?? {};
 if (values.clients.includes('all')) values.clients = Object.keys(clientExports);
 
-const { default: compile } = await import('./compile.js');
+// Ensure the output directory exists
+if (!existsSync(values.output)) await mkdir(values.output, {
+  recursive: true,
+});
+
+const { compile } = await import('./compile.js');
 const css = await compile(values.input);
-for (const client of values.clients.map(c => c.toLowerCase())) {
-  if (!clientExports[client]) throw new Error(`No export for client ${client}`);
+for (const client of values.clients) {
+  if (!clientExports[client]) throw new Error(`No export for client "${client}"`);
   /** @type {ReturnType<ClientExport>} */
   const clientExport = clientExports[client](config);
-
   const outputLocation = join(values.output, clientExport.fileName);
 
   try {
     if (clientExport.type === 'file') writeFile(outputLocation, clientExport.compile(css));
     else {
-      const tmpDir = await realpath(tmpdir());
+      const tmpDir = join(await realpath(tmpdir()), client);
+      mkdir(tmpDir, { recursive: true });
       await clientExport.compile(css, root, tmpDir);
-      asar.createPackage(tmpDir, outputLocation);
+      await asar.createPackage(tmpDir, outputLocation);
       await rm(tmpDir, {
         recursive: true,
         force: true,
@@ -59,6 +66,6 @@ for (const client of values.clients.map(c => c.toLowerCase())) {
       });
     }
   } catch (e) {
-    console.error(`Failed to compile for client ${client}`, e);
+    console.error(`Failed to compile for client ${client}:`, e);
   }
 }
