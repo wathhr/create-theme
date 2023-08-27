@@ -1,6 +1,13 @@
+import { join } from 'node:path';
 import { ParseArgsConfig } from 'node:util';
+import { readdir } from 'node:fs/promises';
+import { root } from './misc';
 
-export const options: ParseArgsConfig['options'] = {
+export const options = {
+  defaults: {
+    type: 'boolean',
+  },
+
   name: {
     type: 'string',
     short: 'n',
@@ -16,30 +23,63 @@ export const options: ParseArgsConfig['options'] = {
   version: {
     type: 'string',
   },
-  defaults: {
-    type: 'boolean',
-  },
-};
 
-export const extraOptionData: Record<string, ExtraOptionData> = {
+  language: {
+    type: 'string',
+  },
+  extras: {
+    type: 'string',
+    multiple: true,
+  }
+} as const satisfies ParseArgsConfig['options'];
+
+export const extraOptionData = {
+  defaults: {
+    prompt: false,
+    default: false,
+  },
+
   name: {
-    default: 'my-theme',
     prompt: true,
+    message: 'What should the name of your theme be?',
+    default: 'my-theme',
   },
   description: {
-    default: 'A discord theme.',
     prompt: true,
+    message: 'What should the description be?',
+    default: 'A discord theme.',
   },
   author: {
-    default: 'me',
     prompt: true,
+    message: 'Who is the author?',
+    default: 'Author',
   },
   version: {
-    default: '1.0.0',
     prompt: false,
+    default: '0.0.1',
   },
-  defaults: {
-    default: false,
-    prompt: false,
+
+  language: {
+    prompt: true,
+    message: 'What language do you want to use?',
+    type: 'select',
+    options: (await readdir(join(root, 'templates'), { withFileTypes: true }))
+      .filter((dir) => dir.isDirectory() && dir.name !== 'base')
+      .map(({ name }) => {
+        return {
+          value: name,
+          label: name[0].toUpperCase() + name.slice(1),
+        };
+      }),
+    default: 'css',
   },
-};
+  extras: {
+    prompt: true,
+    message: 'Select additional options (use arrow keys/space bar)',
+    type: 'multiselect',
+    options: [
+      { value: 'ghAction', label: 'GitHub build & release action' }
+    ],
+    default: [],
+  }
+} satisfies Record<keyof typeof options, ExtraOptionData>;

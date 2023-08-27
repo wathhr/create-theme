@@ -7,6 +7,7 @@ const __dirname = dirname(__filename);
 export const root = join(__dirname, '..');
 
 export const metaFiles = [
+  'index.json',
   'manifest.json',
   'theme.config.json',
 ];

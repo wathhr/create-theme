@@ -16,7 +16,7 @@
   "version": "__themeVersion__",
   "license": "GPL-3.0-or-later",
 
-  "main": "dist/__themeName__.theme.css",
+  "main": "dist.css",
   "updater": {
     "type": "github",
     "id": "__themeAuthor__/__themeName__"

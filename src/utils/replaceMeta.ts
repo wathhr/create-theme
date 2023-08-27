@@ -1,10 +1,12 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { requiredConfigKeys, extraOptionData } from '@constants';
-import { registeredOpts } from 'manageOpts';
+import { registeredOpts } from '@utils/manageOpts';
 
 // TODO: Add support for arrays somehow?
 export async function replaceMeta(file: string) {
-  const content = await readFile(file, 'utf8');
+  const content = await readFile(file, 'utf8').catch((e) => {
+    throw new Error(`Failed to read file, "${file}"`, e);
+  });
 
   const regex = new RegExp(`__theme(${
     requiredConfigKeys
@@ -16,5 +18,7 @@ export async function replaceMeta(file: string) {
       ?? extraOptionData[group].default)).toString();
   });
 
-  await writeFile(file, newContent);
+  await writeFile(file, newContent).catch((e) => {
+    throw new Error(`Failed to write file, "${file}"`, e);
+  });
 }

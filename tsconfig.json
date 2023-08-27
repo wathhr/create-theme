@@ -3,6 +3,8 @@
     "module": "esnext",
     "target": "esnext",
     "moduleResolution": "bundler",
+    // "strict": true,
+    "noUncheckedIndexedAccess": true,
     "baseUrl": "src",
     "paths": {
       "@constants": [

@@ -1,9 +1,11 @@
-import { parseArgs } from 'node:util';
+import { copy, ensureDir, exists } from 'fs-extra';
 import { join } from 'node:path';
-import { copy } from 'fs-extra';
-import { register, registeredOpts } from 'manageOpts';
-import { root, options, extraOptionData, metaFiles } from '@constants';
-import { replaceMeta } from '@utils/replaceMeta';
+import { parseArgs } from 'node:util';
+import { spawnSync } from 'node:child_process';
+import commandExists from 'command-exists';
+import { intro, outro, spinner as spinnerInit } from '@clack/prompts';
+import { replaceMeta, register, registeredOpts } from '@utils';
+import { root, options, metaFiles } from '@constants';
 
 const { values } = parseArgs({
   args: process.argv.slice(2),
@@ -13,18 +15,48 @@ const { values } = parseArgs({
 
 export const useDefaults = values.defaults ?? false;
 
-for (const opt in options) {
-  await register(opt, values[opt], extraOptionData[opt].prompt);
+intro('Discord theme creator');
+for (const o in options) {
+  const opt = o as keyof typeof options;
+  await register(opt, values[opt]);
 }
+
+const spinner = spinnerInit();
+spinner.start();
+spinner.message('Copying project files...');
 
 const path = join(process.cwd(), registeredOpts.get('name').value.toString());
 
-await copy(join(root, 'template'), path, {
+await ensureDir(path);
+await copy(join(root, 'templates/base'), path, {
   overwrite: false,
   errorOnExist: true,
 });
+await copy(join(root, 'templates', registeredOpts.get('language').value.toString()), path);
 
+spinner.message('Replacing metadata...');
 for (const file of metaFiles) {
   const filePath = join(path, file);
+  if (!exists(filePath)) continue;
   await replaceMeta(filePath);
 }
+
+if (exists(join(path, 'package.json'))) {
+  spinner.message('Installing packages...');
+  const packageManagers = ['yarn', 'pnpm', 'npm'];
+  const opts = { cwd: path };
+  if (process.env.npm_execpath) {
+    spawnSync(process.env.npm_execpath, ['install'], opts);
+    packageManagers.length = 0;
+  }
+
+  for (const pm of packageManagers) {
+    if (commandExists.sync(pm)) {
+      spawnSync(pm, ['install'], opts);
+      break;
+    }
+  }
+}
+
+spinner.stop();
+outro('Done!');

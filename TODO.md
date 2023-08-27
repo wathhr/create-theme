@@ -1,4 +1,8 @@
 # TODO
 
-## Meta replacing
-- [ ] Add support for arrays (ie multiple authors)
+## Template
+- [x] Don't bundle TS scripts somehow
+
+## Main
+- [ ] Add support for arrays in meta replacing (ie multiple authors)
+- [x] Use [clack](https://github.com/natemoo-re/clack/) instead of readline

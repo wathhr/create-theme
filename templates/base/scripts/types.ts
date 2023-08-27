@@ -1,0 +1,33 @@
+type ThemeConfig = {
+  name: string,
+  description: string,
+  author: string,
+  version: string,
+};
+
+export type ClientExport = (config: ThemeConfig) => {
+  name: string,
+  fileName: string,
+} & (archiveTypes | fileTypes);
+
+type archiveTypes = {
+  type: 'asar',
+  /**
+   * `tmpDir` is the directory that gets packed
+   *
+   * @example
+   * async compile(content, root, tmpDir) {
+   *   await fs.copyFile(join(root, 'manifest.json'), join(tmpDir, 'manifest.json'));
+   *   await fs.writeFile(join(tmpDir, 'dist.css'), content);
+   * }
+   * @param content The compiled css
+   * @param root The root directory of the theme
+   * @param tmpDir A temporary directory
+   */
+  compile(content: string, root: string, tmpDir: string): void | Promise<void>,
+};
+
+type fileTypes = {
+  type: 'file',
+  compile(content: string): string,
+};

@@ -9,18 +9,19 @@
     "lint": "eslint .",
     "test": "node dist/bin.js",
     "build": "node scripts/build.js",
-    "watch": "node scripts/build.js --watch",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.1",
-    "@types/node": "^20.3.3",
-    "@typescript-eslint/eslint-plugin": "^5.60.1",
-    "@typescript-eslint/parser": "^5.60.1",
-    "esbuild": "^0.18.11",
-    "eslint": "^8.44.0"
+    "@types/node": "^20.5.1",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
+    "esbuild": "^0.19.2",
+    "eslint": "^8.47.0"
   },
   "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "command-exists": "^1.2.9",
     "fs-extra": "^11.1.1"
   },
   "bin": "dist/bin.js",
@@ -29,8 +30,9 @@
     "template"
   ],
   "keywords": [
-    "discord",
     "betterdiscord",
+    "discord",
+    "replugged",
     "theme"
   ]
 }
