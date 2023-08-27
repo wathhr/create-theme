@@ -27,7 +27,7 @@
   "bin": "dist/bin.js",
   "files": [
     "dist",
-    "template"
+    "templates"
   ],
   "keywords": [
     "betterdiscord",
