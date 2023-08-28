@@ -5,6 +5,9 @@ import * as esbuild from 'esbuild';
 const context = await esbuild.context({
   entryPoints: ['./src/index.ts'],
   outfile: './dist/bin.js',
+  banner: {
+    'js': '#!/usr/bin/env node',
+  },
   minify: false,
   bundle: true,
   external: ['./node_modules/*'],

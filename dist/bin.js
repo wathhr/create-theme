@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // src/index.ts
 import { copy, ensureDir, exists } from "../node_modules/fs-extra/lib/index.js";
 import { join as join3, resolve } from "node:path";
