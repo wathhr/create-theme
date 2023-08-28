@@ -1,6 +1,9 @@
 // @ts-check
-
+import { createRequire } from 'node:module';
 import * as esbuild from 'esbuild';
+
+const require = createRequire(import.meta.url);
+const pkg = require('../package.json');
 
 const context = await esbuild.context({
   entryPoints: ['./src/index.ts'],
@@ -10,7 +13,10 @@ const context = await esbuild.context({
   },
   minify: false,
   bundle: true,
-  external: ['./node_modules/*'],
+  external: [
+    ...Object.keys(pkg.devDependencies ?? {}),
+    ...Object.keys(pkg.dependencies ?? {}),
+  ],
   platform: 'node',
   format: 'esm',
   logLevel: 'info',

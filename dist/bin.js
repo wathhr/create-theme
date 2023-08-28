@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
 // src/index.ts
-import { copy, ensureDir, exists } from "../node_modules/fs-extra/lib/index.js";
+import { copy, ensureDir, exists } from "fs-extra";
 import { join as join3, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { spawnSync } from "node:child_process";
 import { readdir as readdir2, writeFile as writeFile2 } from "node:fs/promises";
-import commandExists from "../node_modules/command-exists/index.js";
-import { intro, outro, spinner as spinnerInit } from "../node_modules/@clack/prompts/dist/index.mjs";
+import commandExists from "command-exists";
+import { intro, outro, spinner as spinnerInit } from "@clack/prompts";
 
 // src/utils/combineJson.ts
 import { createRequire } from "module";
-import deepMerge from "../node_modules/ts-deepmerge/esm/index.js";
+import deepMerge from "ts-deepmerge";
 var require2 = createRequire(import.meta.url);
 function combineJson(...files) {
   const objects = files.map((file) => require2(file));
@@ -23,7 +23,7 @@ function combineJson(...files) {
 }
 
 // src/utils/manageOpts.ts
-import * as clack from "../node_modules/@clack/prompts/dist/index.mjs";
+import * as clack from "@clack/prompts";
 
 // src/constants/misc.ts
 import { dirname, join } from "node:path";
