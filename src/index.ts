@@ -1,5 +1,5 @@
 import { copy, ensureDir, exists } from 'fs-extra';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { spawnSync } from 'node:child_process';
 import { readdir, writeFile } from 'node:fs/promises';
@@ -26,7 +26,7 @@ const spinner = spinnerInit();
 spinner.start();
 spinner.message('Copying project files...');
 
-const themePath = join(process.cwd(), registeredOpts.get('name').value.toString());
+const themePath = resolve(process.cwd(), registeredOpts.get('directory').value.toString());
 const languageTemplate = join(root, 'templates', registeredOpts.get('language').value.toString());
 const baseTemplate = join(root, 'templates/base');
 

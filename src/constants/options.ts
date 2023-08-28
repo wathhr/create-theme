@@ -8,6 +8,10 @@ export const options = {
     type: 'boolean',
   },
 
+  directory: {
+    type: 'string',
+    short: 'd',
+  },
   name: {
     type: 'string',
     short: 'n',
@@ -39,6 +43,11 @@ export const extraOptionData = {
     default: false,
   },
 
+  directory: {
+    prompt: true,
+    message: 'Where should we create your project?',
+    default: '.',
+  },
   name: {
     prompt: true,
     message: 'What should the name of your theme be?',

@@ -1,6 +1,6 @@
 // src/index.ts
 import { copy, ensureDir, exists } from "../node_modules/fs-extra/lib/index.js";
-import { join as join3 } from "node:path";
+import { join as join3, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { spawnSync } from "node:child_process";
 import { readdir as readdir2, writeFile as writeFile2 } from "node:fs/promises";
@@ -48,6 +48,10 @@ var options = {
   defaults: {
     type: "boolean"
   },
+  directory: {
+    type: "string",
+    short: "d"
+  },
   name: {
     type: "string",
     short: "n"
@@ -75,6 +79,11 @@ var extraOptionData = {
   defaults: {
     prompt: false,
     default: false
+  },
+  directory: {
+    prompt: true,
+    message: "Where should we create your project?",
+    default: "."
   },
   name: {
     prompt: true,
@@ -203,7 +212,7 @@ for (const o in options) {
 var spinner = spinnerInit();
 spinner.start();
 spinner.message("Copying project files...");
-var themePath = join3(process.cwd(), registeredOpts.get("name").value.toString());
+var themePath = resolve(process.cwd(), registeredOpts.get("directory").value.toString());
 var languageTemplate = join3(root, "templates", registeredOpts.get("language").value.toString());
 var baseTemplate = join3(root, "templates/base");
 await ensureDir(themePath);
