@@ -8,9 +8,9 @@ export const options = {
     type: 'boolean',
   },
 
-  directory: {
+  path: {
     type: 'string',
-    short: 'd',
+    short: 'p',
   },
   name: {
     type: 'string',
@@ -44,9 +44,9 @@ export const extraOptionData = {
     default: false,
   },
 
-  directory: {
+  path: {
     prompt: true,
-    message: 'Where should we create your project?',
+    message: 'What should the theme path be?',
     default: '.',
   },
   name: {
@@ -90,9 +90,10 @@ export const extraOptionData = {
     prompt: true,
     message: 'Select additional options (use arrow keys/space bar)',
     type: 'multiselect',
+    // TODO: Somehow add a lightning css option if you didn't pick lightning css above
     options: [
       { value: 'ghAction', label: 'GitHub build & release action' }
     ],
-    default: [],
+    default: ['ghAction'],
   }
 } satisfies Record<keyof typeof options, ExtraOptionData>;

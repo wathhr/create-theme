@@ -26,7 +26,7 @@ const spinner = spinnerInit();
 spinner.start();
 spinner.message('Copying project files...');
 
-const themePath = resolve(process.cwd(), registeredOpts.get('directory').value.toString());
+const themePath = resolve(process.cwd(), registeredOpts.get('path').value.toString());
 const languageTemplate = join(root, 'templates', registeredOpts.get('language').value.toString());
 const baseTemplate = join(root, 'templates/base');
 
@@ -66,7 +66,6 @@ if (process.env.npm_execpath) {
   spawnSync(process.env.npm_execpath, ['install'], opts);
   packageManagers.length = 0;
 }
-
 for (const pm of packageManagers) {
   if (commandExists.sync(pm)) {
     spawnSync(pm, ['install'], opts);

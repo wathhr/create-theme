@@ -50,9 +50,9 @@ var options = {
   defaults: {
     type: "boolean"
   },
-  directory: {
+  path: {
     type: "string",
-    short: "d"
+    short: "p"
   },
   name: {
     type: "string",
@@ -70,7 +70,8 @@ var options = {
     type: "string"
   },
   language: {
-    type: "string"
+    type: "string",
+    short: "l"
   },
   extras: {
     type: "string",
@@ -82,9 +83,9 @@ var extraOptionData = {
     prompt: false,
     default: false
   },
-  directory: {
+  path: {
     prompt: true,
-    message: "Where should we create your project?",
+    message: "What should the theme path be?",
     default: "."
   },
   name: {
@@ -214,7 +215,7 @@ for (const o in options) {
 var spinner = spinnerInit();
 spinner.start();
 spinner.message("Copying project files...");
-var themePath = resolve(process.cwd(), registeredOpts.get("directory").value.toString());
+var themePath = resolve(process.cwd(), registeredOpts.get("path").value.toString());
 var languageTemplate = join3(root, "templates", registeredOpts.get("language").value.toString());
 var baseTemplate = join3(root, "templates/base");
 await ensureDir(themePath);
