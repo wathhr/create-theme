@@ -113,7 +113,7 @@ var extraOptionData = {
     options: (await readdir(join2(root, "templates"), { withFileTypes: true })).filter((dir) => dir.isDirectory() && dir.name !== "base").map(({ name }) => {
       return {
         value: name,
-        label: name[0].toUpperCase() + name.slice(1)
+        label: name.split(/[\s_-]/).map((word) => word[0].toUpperCase() + word.slice(1)).join(" ")
       };
     }),
     default: "css"

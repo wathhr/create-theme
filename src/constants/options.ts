@@ -30,6 +30,7 @@ export const options = {
 
   language: {
     type: 'string',
+    short: 'l',
   },
   extras: {
     type: 'string',
@@ -77,7 +78,10 @@ export const extraOptionData = {
       .map(({ name }) => {
         return {
           value: name,
-          label: name[0].toUpperCase() + name.slice(1),
+          label: name
+            .split(/[\s_-]/)
+            .map((word) => word[0].toUpperCase() + word.slice(1))
+            .join(' '),
         };
       }),
     default: 'css',
