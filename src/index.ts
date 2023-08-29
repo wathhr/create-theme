@@ -1,11 +1,11 @@
-import { copy, ensureDir, exists } from 'fs-extra';
+import { ensureDir, exists } from 'fs-extra';
+import { readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { spawnSync } from 'node:child_process';
-import { readdir, writeFile } from 'node:fs/promises';
 import commandExists from 'command-exists';
-import { intro, outro, spinner as spinnerInit } from '@clack/prompts';
-import { replaceMeta, register, registeredOpts, combineJson } from '@utils';
+import * as clack from '@clack/prompts';
+import { replaceMeta, register, registeredOpts, mergeDirs } from '@utils';
 import { root, options, metaFiles } from '@constants';
 
 const { values } = parseArgs({
@@ -16,41 +16,32 @@ const { values } = parseArgs({
 
 export const useDefaults = values.defaults ?? false;
 
-intro('Discord theme creator');
+clack.intro('Discord theme creator');
 for (const o in options) {
   const opt = o as keyof typeof options;
   await register(opt, values[opt]);
 }
 
-const spinner = spinnerInit();
+const spinner = clack.spinner();
 spinner.start();
 spinner.message('Copying project files...');
 
 const themePath = resolve(process.cwd(), registeredOpts.get('path').value.toString());
-const languageTemplate = join(root, 'templates', registeredOpts.get('language').value.toString());
 const baseTemplate = join(root, 'templates/base');
+const languageTemplate = join(root, 'templates', registeredOpts.get('language').value.toString());
 
 await ensureDir(themePath);
-await copy(baseTemplate, themePath, {
-  overwrite: false,
-  errorOnExist: true,
-});
-await copy(languageTemplate, themePath);
+if ((await readdir(themePath)).length > 0) {
+  const force = await clack.confirm({
+    message: 'The selected directory is not empty, do you want to continue?',
+    initialValue: false,
+  });
+
+  if (force !== true) process.exit(1);
+}
 
 // Combine JSON files from both directories
-(await readdir(languageTemplate, { withFileTypes: true }))
-  .forEach(async (file) => {
-    if (!(
-      file.name.endsWith('.json') &&
-      file.isFile() &&
-      exists(join(languageTemplate, file.name))
-    )) return;
-
-    await writeFile(
-      join(themePath, file.name),
-      combineJson(join(baseTemplate, file.name), join(languageTemplate, file.name)),
-    );
-  });
+await mergeDirs(themePath, baseTemplate, languageTemplate);
 
 spinner.message('Replacing metadata...');
 for (const file of metaFiles) {
@@ -74,4 +65,4 @@ for (const pm of packageManagers) {
 }
 
 spinner.stop();
-outro('Done!');
+clack.outro('Done!');

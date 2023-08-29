@@ -1,26 +1,13 @@
 #!/usr/bin/env node
 
 // src/index.ts
-import { copy, ensureDir, exists } from "fs-extra";
-import { join as join3, resolve } from "node:path";
+import { ensureDir, exists as exists2 } from "fs-extra";
+import { readdir as readdir3 } from "node:fs/promises";
+import { join as join4, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { spawnSync } from "node:child_process";
-import { readdir as readdir2, writeFile as writeFile2 } from "node:fs/promises";
 import commandExists from "command-exists";
-import { intro, outro, spinner as spinnerInit } from "@clack/prompts";
-
-// src/utils/combineJson.ts
-import { createRequire } from "module";
-import deepMerge from "ts-deepmerge";
-var require2 = createRequire(import.meta.url);
-function combineJson(...files) {
-  const objects = files.map((file) => require2(file));
-  try {
-    return JSON.stringify(deepMerge(...objects), null, 2);
-  } catch (e) {
-    throw new Error(`Failed to combine JSON files [${files}]:`, e);
-  }
-}
+import * as clack2 from "@clack/prompts";
 
 // src/utils/manageOpts.ts
 import * as clack from "@clack/prompts";
@@ -123,10 +110,11 @@ var extraOptionData = {
     prompt: true,
     message: "Select additional options (use arrow keys/space bar)",
     type: "multiselect",
+    // TODO: Somehow add a lightning css option if you didn't pick lightning css above
     options: [
       { value: "ghAction", label: "GitHub build & release action" }
     ],
-    default: []
+    default: ["ghAction"]
   }
 };
 
@@ -185,17 +173,58 @@ async function register(name, arg) {
   return result;
 }
 
+// src/utils/mergeDirs.ts
+import { copy, exists } from "fs-extra";
+import { join as join3, relative } from "path";
+import { lstat, readFile, readdir as readdir2, writeFile } from "fs/promises";
+import deepMerge from "ts-deepmerge";
+async function mergeJson(...files) {
+  const objects = [];
+  for (const file of files) {
+    objects.push(JSON.parse(await readFile(file, "utf8")));
+  }
+  try {
+    const merged = deepMerge(...objects);
+    return JSON.stringify(merged, null, 2);
+  } catch (e) {
+    throw new Error(`Failed to combine JSON files [${files}]:`, e);
+  }
+}
+async function mergeDirs(mainDir, ...dirs) {
+  for (const dir of dirs) {
+    await copy(dir, mainDir, {
+      overwrite: true,
+      errorOnExist: false,
+      async filter(file) {
+        const mainFilePath = join3(mainDir, relative(dir, file));
+        return !(file.endsWith(".json") && (await lstat(file)).isFile() && await exists(mainFilePath));
+      }
+    });
+    (await readdir2(dir, { withFileTypes: true })).forEach(async (file) => {
+      const mainFilePath = join3(mainDir, file.name);
+      if (!(file.name.endsWith(".json") && file.isFile() && await exists(mainFilePath)))
+        return;
+      const content = await mergeJson(mainFilePath, join3(dir, file.name));
+      try {
+        await writeFile(mainFilePath, content);
+      } catch (e) {
+        throw new Error(`Failed to write combined JSON "${mainFilePath}":`, e);
+      }
+    });
+  }
+}
+
 // src/utils/replaceMeta.ts
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile as readFile2, writeFile as writeFile2 } from "node:fs/promises";
 async function replaceMeta(file) {
-  const content = await readFile(file, "utf8").catch((e) => {
+  const content = await readFile2(file, "utf8").catch((e) => {
     throw new Error(`Failed to read "${file}":`, e);
   });
   const regex = new RegExp(`__theme(${requiredConfigKeys.map((key) => key[0].toUpperCase() + key.slice(1)).join("|")})__`, "g");
   const newContent = content.replace(regex, (_, group) => {
     return (registeredOpts.get(group.toLowerCase())?.value ?? extraOptionData[group].default).toString();
   });
-  await writeFile(file, newContent).catch((e) => {
+  await writeFile2(file, newContent).catch((e) => {
     throw new Error(`Failed to write file "${file}":`, e);
   });
 }
@@ -207,39 +236,35 @@ var { values } = parseArgs({
   allowPositionals: false
 });
 var useDefaults = values.defaults ?? false;
-intro("Discord theme creator");
+clack2.intro("Discord theme creator");
 for (const o in options) {
   const opt = o;
   await register(opt, values[opt]);
 }
-var spinner = spinnerInit();
-spinner.start();
-spinner.message("Copying project files...");
+var spinner2 = clack2.spinner();
+spinner2.start();
+spinner2.message("Copying project files...");
 var themePath = resolve(process.cwd(), registeredOpts.get("path").value.toString());
-var languageTemplate = join3(root, "templates", registeredOpts.get("language").value.toString());
-var baseTemplate = join3(root, "templates/base");
+var baseTemplate = join4(root, "templates/base");
+var languageTemplate = join4(root, "templates", registeredOpts.get("language").value.toString());
 await ensureDir(themePath);
-await copy(baseTemplate, themePath, {
-  overwrite: false,
-  errorOnExist: true
-});
-await copy(languageTemplate, themePath);
-(await readdir2(languageTemplate, { withFileTypes: true })).forEach(async (file) => {
-  if (!(file.name.endsWith(".json") && file.isFile() && exists(join3(languageTemplate, file.name))))
-    return;
-  await writeFile2(
-    join3(themePath, file.name),
-    combineJson(join3(baseTemplate, file.name), join3(languageTemplate, file.name))
-  );
-});
-spinner.message("Replacing metadata...");
+if ((await readdir3(themePath)).length > 0) {
+  const force = await clack2.confirm({
+    message: "The selected directory is not empty, do you want to continue?",
+    initialValue: false
+  });
+  if (force !== true)
+    process.exit(1);
+}
+await mergeDirs(themePath, baseTemplate, languageTemplate);
+spinner2.message("Replacing metadata...");
 for (const file of metaFiles) {
-  const filePath = join3(themePath, file);
-  if (!exists(filePath))
+  const filePath = join4(themePath, file);
+  if (!exists2(filePath))
     continue;
   await replaceMeta(filePath);
 }
-spinner.message("Installing packages...");
+spinner2.message("Installing packages...");
 var packageManagers = ["yarn", "pnpm", "npm"];
 var opts = { cwd: themePath };
 if (process.env.npm_execpath) {
@@ -252,8 +277,8 @@ for (const pm of packageManagers) {
     break;
   }
 }
-spinner.stop();
-outro("Done!");
+spinner2.stop();
+clack2.outro("Done!");
 export {
   useDefaults
 };
