@@ -98,7 +98,7 @@ var extraOptionData = {
     prompt: true,
     message: "What language do you want to use?",
     type: "select",
-    options: (await readdir(join2(root, "templates"), { withFileTypes: true })).filter((dir) => dir.isDirectory() && dir.name !== "base").map(({ name }) => {
+    options: (await readdir(join2(root, "templates/languages"), { withFileTypes: true })).map(({ name }) => {
       return {
         value: name,
         label: name.split(/[\s_-]/).map((word) => word[0].toUpperCase() + word.slice(1)).join(" ")
@@ -246,7 +246,7 @@ spinner2.start();
 spinner2.message("Copying project files...");
 var themePath = resolve(process.cwd(), registeredOpts.get("path").value.toString());
 var baseTemplate = join4(root, "templates/base");
-var languageTemplate = join4(root, "templates", registeredOpts.get("language").value.toString());
+var languageTemplate = join4(root, "templates/languages", registeredOpts.get("language").value.toString());
 await ensureDir(themePath);
 if ((await readdir3(themePath)).length > 0) {
   const force = await clack2.confirm({

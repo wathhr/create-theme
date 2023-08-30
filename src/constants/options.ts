@@ -73,8 +73,7 @@ export const extraOptionData = {
     prompt: true,
     message: 'What language do you want to use?',
     type: 'select',
-    options: (await readdir(join(root, 'templates'), { withFileTypes: true }))
-      .filter((dir) => dir.isDirectory() && dir.name !== 'base')
+    options: (await readdir(join(root, 'templates/languages'), { withFileTypes: true }))
       .map(({ name }) => {
         return {
           value: name,

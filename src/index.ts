@@ -28,7 +28,7 @@ spinner.message('Copying project files...');
 
 const themePath = resolve(process.cwd(), registeredOpts.get('path').value.toString());
 const baseTemplate = join(root, 'templates/base');
-const languageTemplate = join(root, 'templates', registeredOpts.get('language').value.toString());
+const languageTemplate = join(root, 'templates/languages', registeredOpts.get('language').value.toString());
 
 await ensureDir(themePath);
 if ((await readdir(themePath)).length > 0) {
