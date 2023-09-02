@@ -5,6 +5,8 @@
   },
   "dependencies": {
     "@electron/asar": "^3.2.4",
-    "arg": "^5.0.2"
+    "@parcel/watcher": "^2.3.0",
+    "arg": "^5.0.2",
+    "throttle-debounce": "^5.0.0"
   }
 }

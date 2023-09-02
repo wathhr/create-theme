@@ -12,9 +12,10 @@ export const metaFiles = [
   'theme.config.json',
 ];
 
-export const requiredConfigKeys = [
+export const configKeys = [
   'name',
   'author',
   'description',
   'version',
+  'inputFile',
 ];

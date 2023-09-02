@@ -24,7 +24,7 @@ type ThemeConfig = {
   description: string,
   author: string,
   version: string,
-  inputFile?: string,
+  inputFile: string,
 };
 
 type OptionalReadonly<T> = Readonly<T> | T;

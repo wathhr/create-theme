@@ -1,5 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { requiredConfigKeys, extraOptionData } from '@constants';
+import { configKeys, extraOptionData } from '@constants';
 import { registeredOpts } from '@utils/manageOpts';
 
 // TODO: Add support for arrays somehow?
@@ -9,7 +9,7 @@ export async function replaceMeta(file: string) {
   });
 
   const regex = new RegExp(`__theme(${
-    requiredConfigKeys
+    configKeys
       .map(key => key[0].toUpperCase() + key.slice(1))
       .join('|')})__`, 'g');
 

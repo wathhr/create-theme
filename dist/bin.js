@@ -23,11 +23,12 @@ var metaFiles = [
   "manifest.json",
   "theme.config.json"
 ];
-var requiredConfigKeys = [
+var configKeys = [
   "name",
   "author",
   "description",
-  "version"
+  "version",
+  "inputFile"
 ];
 
 // src/constants/options.ts
@@ -220,7 +221,7 @@ async function replaceMeta(file) {
   const content = await readFile2(file, "utf8").catch((e) => {
     throw new Error(`Failed to read "${file}":`, e);
   });
-  const regex = new RegExp(`__theme(${requiredConfigKeys.map((key) => key[0].toUpperCase() + key.slice(1)).join("|")})__`, "g");
+  const regex = new RegExp(`__theme(${configKeys.map((key) => key[0].toUpperCase() + key.slice(1)).join("|")})__`, "g");
   const newContent = content.replace(regex, (_, group) => {
     return (registeredOpts.get(group.toLowerCase())?.value ?? extraOptionData[group].default).toString();
   });
