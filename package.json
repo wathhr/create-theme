@@ -1,7 +1,7 @@
 {
   "name": "@walter-org/create-theme",
   "author": "wathhr",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A template for creating Discord themes.",
   "license": "GPL-3.0-or-later",
   "type": "module",
