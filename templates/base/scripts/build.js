@@ -3,11 +3,11 @@
 
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { tmpdir } from 'node:os';
-import { mkdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import arg from 'arg'; // Get rid of this and use parseArgs from node:utils
+import { fileURLToPath } from 'node:url';
+import { mkdir, realpath, rm, writeFile } from 'node:fs/promises';
+import { parseArgs } from 'node:util';
+import { tmpdir } from 'node:os';
 import asar from '@electron/asar';
 import parcelWatcher from '@parcel/watcher';
 import { debounce } from 'throttle-debounce';
@@ -31,19 +31,37 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = join(__dirname, '..');
 
-const args = Object.fromEntries(Object.entries(arg({
-  '--input': String,
-  '--output': String,
-  '--clients': [String], '--client': '--clients', '-c': '--clients',
-  '--watch': Boolean,
-})).map(([key, value]) => [key.replace(/^-{1,2}/, ''), value]));
+const { values: args, positionals } = parseArgs({
+  options: {
+    input: {
+      type: 'string',
+      short: 'i',
+    },
+    output: {
+      type: 'string',
+      short: 'o',
+    },
+    client: {
+      type: 'string',
+      multiple: true,
+      short: 'c',
+    },
+    watch: {
+      type: 'boolean',
+      short: 'w',
+    }
+  },
+  allowPositionals: true,
+});
 
 const defaults = {
-  input: args._.at(-1) ?? join(root, config.inputFile),
+  input: positionals.at(-1) ?? join(root, config.inputFile),
   output: join(root, 'dist/'),
-  clients: args.watch ? ['betterDiscord'] : ['all'],
+  client: args.watch ? ['betterDiscord'] : ['all'],
   watch: false
 };
+/** @type {Required<typeof defaults>} */
+// @ts-expect-error For some reason it thinks the keys can be invalid?
 const values = {
   ...defaults,
   ...args,
@@ -55,13 +73,13 @@ if (!existsSync(values.output)) await mkdir(values.output, {
 });
 
 const clientExports = await import('./clients.js') ?? {};
-if (values.clients.includes('all')) values.clients = Object.keys(clientExports);
+if (values.client.includes('all')) values.client = Object.keys(clientExports);
 
 const { compile } = await import('./compile.js');
 
 if (values.watch) {
-  if (values.clients.length > 1) throw new Error('Only 1 client is allowed on watch mode.');
-  const client = values.clients[0];
+  if (values.client.length > 1) throw new Error('Only 1 client is allowed on watch mode.');
+  const client = values.client[0];
 
   await build(client);
   const watcher = await parcelWatcher.subscribe(join(root, 'src'), debounce(100, async (err, events) => {
@@ -75,7 +93,7 @@ if (values.watch) {
 
   process.on('beforeExit', watcher.unsubscribe);
 } else {
-  for (const client of values.clients) {
+  for (const client of values.client) {
     await build(client);
   }
 }
