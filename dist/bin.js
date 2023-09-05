@@ -201,7 +201,8 @@ async function mergeDirs(mainDir, ...dirs) {
         return !(file.endsWith(".json") && (await lstat(file)).isFile() && await exists(mainFilePath));
       }
     });
-    (await readdir2(dir, { withFileTypes: true })).forEach(async (file) => {
+    const files = await readdir2(dir, { withFileTypes: true });
+    for (const file of files) {
       const mainFilePath = join3(mainDir, file.name);
       if (!(file.name.endsWith(".json") && file.isFile() && await exists(mainFilePath)))
         return;
@@ -211,7 +212,7 @@ async function mergeDirs(mainDir, ...dirs) {
       } catch (e) {
         throw new Error(`Failed to write combined JSON "${mainFilePath}":`, e);
       }
-    });
+    }
   }
 }
 

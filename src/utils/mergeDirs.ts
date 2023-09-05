@@ -3,7 +3,7 @@ import { join, relative } from 'path';
 import { lstat, readFile, readdir, writeFile } from 'fs/promises';
 import deepMerge from 'ts-deepmerge';
 
-async function mergeJson(...files: string[]): Promise<string> {
+async function mergeJson(...files: string[]) {
   const objects = [];
   for (const file of files) {
     objects.push(JSON.parse(await readFile(file, 'utf8')));
@@ -32,22 +32,22 @@ export async function mergeDirs(mainDir: string, ...dirs: string[]) {
       }
     });
 
-    (await readdir(dir, { withFileTypes: true }))
-      .forEach(async (file) => {
-        const mainFilePath = join(mainDir, file.name);
-        if (!(
-          file.name.endsWith('.json') &&
-          file.isFile() &&
-          await exists(mainFilePath)
-        )) return;
+    const files = await readdir(dir, { withFileTypes: true });
+    for (const file of files) {
+      const mainFilePath = join(mainDir, file.name);
+      if (!(
+        file.name.endsWith('.json') &&
+        file.isFile() &&
+        await exists(mainFilePath)
+      )) return;
 
-        const content = await mergeJson(mainFilePath, join(dir, file.name));
+      const content = await mergeJson(mainFilePath, join(dir, file.name));
 
-        try {
-          await writeFile(mainFilePath, content);
-        } catch (e) {
-          throw new Error(`Failed to write combined JSON "${mainFilePath}":`, e);
-        }
-      });
+      try {
+        await writeFile(mainFilePath, content);
+      } catch (e) {
+        throw new Error(`Failed to write combined JSON "${mainFilePath}":`, e);
+      }
+    }
   }
 }
