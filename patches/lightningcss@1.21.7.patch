@@ -1,0 +1,16 @@
+diff --git a/node/index.d.ts b/node/index.d.ts
+index 8bf1cbb12a34ca0b170a2d140b2c2c75dc1a38ed..c819569ed1705dc8763370547acff5fb7492ff29 100644
+--- a/node/index.d.ts
++++ b/node/index.d.ts
+@@ -24,9 +24,9 @@ export interface TransformOptions<C extends CustomAtRules> {
+   /** The browser targets for the generated code. */
+   targets?: Targets,
+   /** Features that should always be compiled, even when supported by targets. */
+-  include?: Features,
++  include?: typeof Features,
+   /** Features that should never be compiled, even when unsupported by targets. */
+-  exclude?: Features,
++  exclude?: typeof Features,
+   /** Whether to enable parsing various draft syntax. */
+   drafts?: Drafts,
+   /** Whether to enable various non-standard syntax. */

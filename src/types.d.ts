@@ -1,11 +1,15 @@
-type ArgumentValue = OptionalReadonly<string | boolean | (string | boolean)[]>;
+export { ThemeConfig } from '../templates/base/scripts/types';
 
-type RegisteredOpt = {
+export type ArgumentValue = OptionalReadonly<string | boolean | (string | boolean)[]>;
+
+export type RegisteredOpt = {
   prompted: boolean,
   value: ArgumentValue,
 };
 
-type ExtraOptionData = {
+type OptionalReadonly<T> = Readonly<T> | T;
+
+export type ExtraOptionData = {
   default: OptionalReadonly<ArgumentValue>;
 } & ({ prompt: true; message: string } | { prompt: false }) & ({
   type: 'boolean',
@@ -18,13 +22,3 @@ type ExtraOptionData = {
 } | {
   type?: 'text',
 });
-
-type ThemeConfig = {
-  name: string,
-  description: string,
-  author: string,
-  version: string,
-  inputFile: string,
-};
-
-type OptionalReadonly<T> = Readonly<T> | T;

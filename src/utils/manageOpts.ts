@@ -1,4 +1,5 @@
 import * as clack from '@clack/prompts';
+import type { ArgumentValue, RegisteredOpt } from '@root/types';
 import { useDefaults } from '..';
 import { extraOptionData, options } from '@constants';
 

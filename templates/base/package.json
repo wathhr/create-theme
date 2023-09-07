@@ -6,6 +6,7 @@
   "dependencies": {
     "@electron/asar": "^3.2.4",
     "@parcel/watcher": "^2.3.0",
+    "lightningcss": "^1.21.7",
     "throttle-debounce": "^5.0.0"
   }
 }

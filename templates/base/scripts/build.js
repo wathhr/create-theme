@@ -11,6 +11,8 @@ import { tmpdir } from 'node:os';
 import asar from '@electron/asar';
 import parcelWatcher from '@parcel/watcher';
 import { debounce } from 'throttle-debounce';
+import { transform } from 'lightningcss';
+import { compile } from './compile.js';
 
 const require = createRequire(import.meta.url);
 /** @type {Required<import('./types').ThemeConfig>} */
@@ -72,10 +74,8 @@ if (!existsSync(values.output)) await mkdir(values.output, {
   recursive: true,
 });
 
-const clientExports = await import('./clients.js') ?? {};
+const clientExports = await import('./clients.js');
 if (values.client.includes('all')) values.client = Object.keys(clientExports);
-
-const { compile } = await import('./compile.js');
 
 if (values.watch) {
   if (values.client.length > 1) throw new Error('Only 1 client is allowed on watch mode.');
@@ -109,7 +109,20 @@ async function build(client) {
   const outputLocation = join(values.output, clientExport.fileName);
 
   try {
-    const css = await compile(values.input);
+    const preprocessed = await compile(values.input);
+    const { code } = transform({
+      filename: values.input,
+      code: Buffer.from(preprocessed),
+      minify: process.env.NODE_ENV ? process.env.NODE_ENV === 'development' : !values.watch,
+      projectRoot: root,
+      targets: clientExport.targets,
+      include: clientExport.features ?? config.features ?? 0,
+      drafts: clientExport.drafts ?? config.drafts ?? {},
+      analyzeDependencies: true,
+    });
+
+    const css = code.toString();
+
     if (clientExport.type === 'file') writeFile(outputLocation, clientExport.compile(css));
     else {
       const tmpDir = join(await realpath(tmpdir()), client);

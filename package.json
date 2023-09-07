@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test": "node dist/bin.js",
     "build": "node scripts/build.js",
-    "prepare": "npm run build"
+    "schema": "ts-json-schema-generator --path src/types.d.ts --type ThemeConfig > dist/schema.json",
+    "prepare": "npm run build && npm schema"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.1",
@@ -17,7 +18,9 @@
     "@typescript-eslint/eslint-plugin": "^6.4.0",
     "@typescript-eslint/parser": "^6.4.0",
     "esbuild": "^0.19.2",
-    "eslint": "^8.47.0"
+    "eslint": "^8.47.0",
+    "lightningcss": "^1.21.7",
+    "ts-json-schema-generator": "^1.3.0"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
@@ -36,5 +39,10 @@
     "discord",
     "replugged",
     "theme"
-  ]
+  ],
+  "pnpm": {
+    "patchedDependencies": {
+      "lightningcss@1.21.7": "patches/lightningcss@1.21.7.patch"
+    }
+  }
 }

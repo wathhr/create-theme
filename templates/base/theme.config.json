@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/wathhr/create-theme/main/dist/schema.json",
   "name": "__themeName__",
   "description": "__themeDescription__",
   "author": "__themeAuthor__",

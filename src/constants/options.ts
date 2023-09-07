@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { ParseArgsConfig } from 'node:util';
 import { readdir } from 'node:fs/promises';
+import type { ExtraOptionData } from '@root/types.d.ts';
 import { root } from './misc';
 
 export const options = {
