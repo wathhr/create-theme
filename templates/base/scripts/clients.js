@@ -31,6 +31,7 @@ export function stylus(config) {
     name: 'Stylus',
     fileName: config.name + '.user.css',
     type: 'file',
+    targets: 'defaults',
     compile: (content) => [
       '/* ==UserStyle==',
       `@name ${config.name}`,

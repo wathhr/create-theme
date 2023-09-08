@@ -9,9 +9,10 @@ import { mkdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { tmpdir } from 'node:os';
 import asar from '@electron/asar';
+import browserslist from 'browserslist';
 import parcelWatcher from '@parcel/watcher';
+import { browserslistToTargets, transform } from 'lightningcss';
 import { debounce } from 'throttle-debounce';
-import { transform } from 'lightningcss';
 import { compile } from './compile.js';
 
 const require = createRequire(import.meta.url);
@@ -115,7 +116,7 @@ async function build(client) {
       code: Buffer.from(preprocessed),
       minify: process.env.NODE_ENV ? process.env.NODE_ENV === 'development' : !values.watch,
       projectRoot: root,
-      targets: clientExport.targets,
+      targets: browserslistToTargets(browserslist(clientExport.targets ?? 'Chrome >= 108')), // Electron v22+
       include: clientExport.features ?? config.features ?? 0,
       drafts: clientExport.drafts ?? config.drafts ?? {},
       analyzeDependencies: true,
