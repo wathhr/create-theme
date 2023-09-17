@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "browserslist": "^4.21.10",
+    "lightningcss": "^1.21.8"
+  }
+}

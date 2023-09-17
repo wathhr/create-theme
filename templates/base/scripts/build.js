@@ -1,11 +1,13 @@
 // @ts-check
 /** @typedef {import('./types').ClientExport} ClientExport */
+/** @typedef {import('./types').PreprocessExport} PreprocessExport */
+/** @typedef {import('./types').PostprocessExport} PostprocessExport */
 
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { mkdir, realpath, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { tmpdir } from 'node:os';
 import asar from '@electron/asar';
@@ -13,7 +15,6 @@ import browserslist from 'browserslist';
 import parcelWatcher from '@parcel/watcher';
 import { browserslistToTargets, transform } from 'lightningcss';
 import { debounce } from 'throttle-debounce';
-import { compile } from './compile.js';
 
 const require = createRequire(import.meta.url);
 /** @type {Required<import('./types').ThemeConfig>} */
@@ -60,11 +61,11 @@ const { values: args, positionals } = parseArgs({
 const defaults = {
   input: positionals.at(-1) ?? join(root, config.inputFile),
   output: join(root, 'dist/'),
-  client: args.watch ? ['betterDiscord'] : ['all'],
+  client: args.watch ? [config.preferredClient || 'betterDiscord'] : ['all'],
   watch: false
 };
 /** @type {Required<typeof defaults>} */
-// @ts-expect-error For some reason it thinks the keys can be invalid?
+// @ts-expect-error For some reason it thinks the keys can be undefined?
 const values = {
   ...defaults,
   ...args,
@@ -75,7 +76,7 @@ if (!existsSync(values.output)) await mkdir(values.output, {
   recursive: true,
 });
 
-const clientExports = await import('./clients.js');
+const clientExports = await import('./helpers/clients.js');
 if (values.client.includes('all')) values.client = Object.keys(clientExports);
 
 if (values.watch) {
@@ -109,20 +110,31 @@ async function build(client) {
   const clientExport = clientExports[client](config);
   const outputLocation = join(values.output, clientExport.fileName);
 
-  try {
-    const preprocessed = await compile(values.input);
-    const { code } = transform({
-      filename: values.input,
-      code: Buffer.from(preprocessed),
+  /** @type {{ preprocess?: PreprocessExport, postprocess?: PostprocessExport }} */
+  const {
+    preprocess = async (file) => await readFile(file, 'utf8'),
+    postprocess = (file, content) => transform({
+      filename: file,
+      code: Buffer.from(content),
       minify: process.env.NODE_ENV ? process.env.NODE_ENV === 'development' : !values.watch,
       projectRoot: root,
       targets: browserslistToTargets(browserslist(clientExport.targets ?? 'Chrome >= 108')), // Electron v22+
       include: clientExport.features ?? config.features ?? 0,
       drafts: clientExport.drafts ?? config.drafts ?? {},
       analyzeDependencies: true,
-    });
+    }).code.toString(),
+  } = await import('./helpers/process.js');
 
-    const css = code.toString();
+  try {
+    const extras = {
+      args: values,
+      clientExport: clientExport,
+      config: config,
+      root,
+    };
+
+    const preprocessed = await preprocess(values.input, extras);
+    const css = await postprocess(values.input, preprocessed, extras);
 
     if (clientExport.type === 'file') writeFile(outputLocation, clientExport.compile(css));
     else {
