@@ -179,6 +179,51 @@ import { copy, exists } from "fs-extra";
 import { join as join3, relative } from "path";
 import { lstat, readFile, readdir as readdir2, writeFile } from "fs/promises";
 import deepMerge from "ts-deepmerge";
+var specialExts = [
+  "json"
+];
+async function mergeDirs(mainDir, ...dirs) {
+  async function skipCopy(file, mainFilePath, stat) {
+    const extension = file.split(".").pop();
+    const shouldSkip = (
+      // Skip if:
+      specialExts.includes(extension) && // it has a special extension
+      (stat ?? await lstat(file)).isFile() && // and it's a file
+      await exists(mainFilePath)
+    );
+    return shouldSkip;
+  }
+  for (const dir of dirs) {
+    await copy(dir, mainDir, {
+      overwrite: true,
+      errorOnExist: false,
+      async filter(file) {
+        const mainFilePath = join3(mainDir, relative(dir, file));
+        return !await skipCopy(file, mainFilePath);
+      }
+    });
+    const files = await readdir2(dir, { withFileTypes: true });
+    for (const dirent of files) {
+      const fileName = dirent.name;
+      const mainFilePath = join3(mainDir, fileName);
+      if (!await skipCopy(fileName, mainFilePath, dirent))
+        continue;
+      const fileExt = fileName.split(".").pop();
+      try {
+        await writeFile(mainFilePath, await (async () => {
+          switch (fileExt) {
+            case "json":
+              return await mergeJson(mainFilePath, join3(dir, fileName));
+            default:
+              throw new Error(`Unexpected file extension: "${fileName}"`);
+          }
+        })());
+      } catch (e) {
+        console.error(`Failed to write file to: "${mainFilePath}"`, e);
+      }
+    }
+  }
+}
 async function mergeJson(...files) {
   const objects = [];
   for (const file of files) {
@@ -189,30 +234,6 @@ async function mergeJson(...files) {
     return JSON.stringify(merged, null, 2);
   } catch (e) {
     throw new Error(`Failed to combine JSON files [${files}]:`, e);
-  }
-}
-async function mergeDirs(mainDir, ...dirs) {
-  for (const dir of dirs) {
-    await copy(dir, mainDir, {
-      overwrite: true,
-      errorOnExist: false,
-      async filter(file) {
-        const mainFilePath = join3(mainDir, relative(dir, file));
-        return !(file.endsWith(".json") && (await lstat(file)).isFile() && await exists(mainFilePath));
-      }
-    });
-    const files = await readdir2(dir, { withFileTypes: true });
-    for (const file of files) {
-      const mainFilePath = join3(mainDir, file.name);
-      if (!(file.name.endsWith(".json") && file.isFile() && await exists(mainFilePath)))
-        return;
-      const content = await mergeJson(mainFilePath, join3(dir, file.name));
-      try {
-        await writeFile(mainFilePath, content);
-      } catch (e) {
-        throw new Error(`Failed to write combined JSON "${mainFilePath}":`, e);
-      }
-    }
   }
 }
 
