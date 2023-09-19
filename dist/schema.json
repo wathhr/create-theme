@@ -160,6 +160,9 @@
         "name": {
           "type": "string"
         },
+        "preferredClient": {
+          "type": "string"
+        },
         "version": {
           "type": "string"
         }
