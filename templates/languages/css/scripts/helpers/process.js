@@ -1,6 +1,6 @@
 // @ts-check
-/** @typedef {import('./types').PreprocessExport} PreprocessExport */
-/** @typedef {import('./types').PostprocessExport} PostprocessExport */
+/** @typedef {import('../types').PreprocessExport} PreprocessExport */
+/** @typedef {import('../types').PostprocessExport} PostprocessExport */
 
 import browserslist from 'browserslist';
 import { browserslistToTargets, bundle } from 'lightningcss';
