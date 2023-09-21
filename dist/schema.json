@@ -8,10 +8,6 @@
         "customMedia": {
           "description": "Whether to enable",
           "type": "boolean"
-        },
-        "nesting": {
-          "description": "Whether to enable CSS nesting.",
-          "type": "boolean"
         }
       },
       "type": "object"

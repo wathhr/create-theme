@@ -13,13 +13,13 @@
     "prepare": "npm run build && npm run schema"
   },
   "devDependencies": {
-    "@types/fs-extra": "^11.0.1",
-    "@types/node": "^20.5.1",
-    "@typescript-eslint/eslint-plugin": "^6.4.0",
-    "@typescript-eslint/parser": "^6.4.0",
-    "esbuild": "^0.19.2",
-    "eslint": "^8.47.0",
-    "lightningcss": "^1.21.7",
+    "@types/fs-extra": "^11.0.2",
+    "@types/node": "^20.6.3",
+    "@typescript-eslint/eslint-plugin": "^6.7.2",
+    "@typescript-eslint/parser": "^6.7.2",
+    "esbuild": "^0.19.3",
+    "eslint": "^8.49.0",
+    "lightningcss": "^1.22.0",
     "ts-json-schema-generator": "^1.3.0"
   },
   "dependencies": {
@@ -40,10 +40,5 @@
     "discord",
     "replugged",
     "theme"
-  ],
-  "pnpm": {
-    "patchedDependencies": {
-      "lightningcss@1.21.7": "patches/lightningcss@1.21.7.patch"
-    }
-  }
+  ]
 }
