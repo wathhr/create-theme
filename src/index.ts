@@ -2,8 +2,8 @@ import { ensureDir, exists } from 'fs-extra';
 import { readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { spawnSync } from 'node:child_process';
 import commandExists from 'command-exists';
+import spawn from 'cross-spawn';
 import * as clack from '@clack/prompts';
 import { replaceMeta, register, registeredOpts, mergeDirs } from '@utils';
 import { root, options, metaFiles } from '@constants';
@@ -54,12 +54,12 @@ spinner.message('Installing packages...');
 const packageManagers = ['yarn', 'pnpm', 'npm'];
 const opts = { cwd: themePath };
 if (process.env.npm_execpath) {
-  spawnSync(process.env.npm_execpath, ['install'], opts);
+  spawn.sync(process.env.npm_execpath, ['install'], opts);
   packageManagers.length = 0;
 }
 for (const pm of packageManagers) {
   if (commandExists.sync(pm)) {
-    spawnSync(pm, ['install'], opts);
+    spawn.sync(pm, ['install'], opts);
     break;
   }
 }
