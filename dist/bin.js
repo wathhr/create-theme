@@ -111,11 +111,13 @@ var extraOptionData = {
     prompt: true,
     message: "Select additional options (use arrow keys/space bar)",
     type: "multiselect",
-    // TODO: Somehow add a lightning css option if you didn't pick lightning css above
-    options: [
-      { value: "ghAction", label: "GitHub build & release action" }
-    ],
-    default: ["ghAction"]
+    options: (await readdir(join2(root, "templates/extras"), { withFileTypes: true })).map(({ name }) => {
+      return {
+        value: name,
+        label: name.split(/[\s_-]/).map((word) => word[0].toUpperCase() + word.slice(1)).join(" ")
+      };
+    }),
+    default: []
   }
 };
 
@@ -265,11 +267,11 @@ for (const o in options) {
   await register(opt, values[opt]);
 }
 var spinner2 = clack2.spinner();
-spinner2.start();
-spinner2.message("Copying project files...");
+spinner2.start("Copying project files...");
 var themePath = resolve(process.cwd(), registeredOpts.get("path").value.toString());
 var baseTemplate = join4(root, "templates/base");
 var languageTemplate = join4(root, "templates/languages", registeredOpts.get("language").value.toString());
+var extrasTemplates = registeredOpts.get("extras").value.map((e) => join4(root, "templates/extras", e));
 await ensureDir(themePath);
 if ((await readdir3(themePath)).length > 0) {
   const force = await clack2.confirm({
@@ -279,7 +281,7 @@ if ((await readdir3(themePath)).length > 0) {
   if (force !== true)
     process.exit(1);
 }
-await mergeDirs(themePath, baseTemplate, languageTemplate);
+await mergeDirs(themePath, baseTemplate, languageTemplate, ...extrasTemplates);
 spinner2.message("Replacing metadata...");
 for (const file of metaFiles) {
   const filePath = join4(themePath, file);

@@ -23,12 +23,13 @@ for (const o in options) {
 }
 
 const spinner = clack.spinner();
-spinner.start();
-spinner.message('Copying project files...');
+spinner.start('Copying project files...');
 
 const themePath = resolve(process.cwd(), registeredOpts.get('path').value.toString());
 const baseTemplate = join(root, 'templates/base');
 const languageTemplate = join(root, 'templates/languages', registeredOpts.get('language').value.toString());
+const extrasTemplates = (registeredOpts.get('extras').value as string[])
+  .map((e) => join(root, 'templates/extras', e));
 
 await ensureDir(themePath);
 if ((await readdir(themePath)).length > 0) {
@@ -41,7 +42,7 @@ if ((await readdir(themePath)).length > 0) {
 }
 
 // Combine JSON files from both directories
-await mergeDirs(themePath, baseTemplate, languageTemplate);
+await mergeDirs(themePath, baseTemplate, languageTemplate, ...extrasTemplates);
 
 spinner.message('Replacing metadata...');
 for (const file of metaFiles) {

@@ -90,10 +90,16 @@ export const extraOptionData = {
     prompt: true,
     message: 'Select additional options (use arrow keys/space bar)',
     type: 'multiselect',
-    // TODO: Somehow add a lightning css option if you didn't pick lightning css above
-    options: [
-      { value: 'ghAction', label: 'GitHub build & release action' }
-    ],
-    default: ['ghAction'],
+    options: (await readdir(join(root, 'templates/extras'), { withFileTypes: true }))
+      .map(({ name }) => {
+        return {
+          value: name,
+          label: name
+            .split(/[\s_-]/)
+            .map((word) => word[0].toUpperCase() + word.slice(1))
+            .join(' '),
+        };
+      }),
+    default: [],
   }
 } satisfies Record<keyof typeof options, ExtraOptionData>;
