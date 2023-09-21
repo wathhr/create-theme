@@ -1,3 +1,4 @@
+import * as clack from '@clack/prompts';
 export { ThemeConfig } from '../templates/base/scripts/types';
 
 export type ArgumentValue = OptionalReadonly<string | boolean | (string | boolean)[]>;
@@ -15,10 +16,10 @@ export type ExtraOptionData = {
   type: 'boolean',
 } | {
   type: 'multiselect',
-  options: OptionalReadonly<Parameters<typeof import('@clack/prompts')['multiselect']>['0']['options']>,
+  options: OptionalReadonly<Parameters<typeof clack.multiselect>['0']['options']>,
 } | {
   type: 'select',
-  options: OptionalReadonly<Parameters<typeof import('@clack/prompts')['select']>['0']['options']>,
+  options: OptionalReadonly<Parameters<typeof clack.select>['0']['options']>,
 } | {
   type?: 'text',
 });
