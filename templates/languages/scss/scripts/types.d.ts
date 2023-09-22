@@ -1,0 +1,1 @@
+C:/Users/wathhr/Discord/create-theme/templates/base/scripts/types.ts
