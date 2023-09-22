@@ -84,6 +84,7 @@ if (values.watch) {
   const client = values.client[0];
 
   await build(client);
+  console.log('Watching...');
   const watcher = await parcelWatcher.subscribe(join(root, 'src'), debounce(100, async (err, events) => {
     if (err) throw err;
 
@@ -125,17 +126,22 @@ async function build(client) {
     }).code.toString(),
   } = await import('./helpers/process.js');
 
+  const extras = {
+    args: values,
+    clientExport: clientExport,
+    config: config,
+    root,
+  };
+
   try {
-    const extras = {
-      args: values,
-      clientExport: clientExport,
-      config: config,
-      root,
-    };
+    var preprocessed = await preprocess(values.input, extras);
+    var css = await postprocess(values.input, preprocessed, extras);
+  } catch (e) {
+    console.error('Failed to compile source code:', e?.message);
+    process.exit(1);
+  }
 
-    const preprocessed = await preprocess(values.input, extras);
-    const css = await postprocess(values.input, preprocessed, extras);
-
+  try {
     if (clientExport.type === 'file') writeFile(outputLocation, clientExport.compile(css));
     else {
       const tmpDir = join(await realpath(tmpdir()), client);
@@ -145,7 +151,6 @@ async function build(client) {
       await rm(tmpDir, {
         recursive: true,
         force: true,
-        maxRetries: 5,
       });
     }
   } catch (e) {
