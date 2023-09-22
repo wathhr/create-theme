@@ -1,4 +1,4 @@
-import { Drafts, Features } from 'lightningcss';
+import { Drafts } from 'lightningcss';
 
 export type ThemeConfig = {
   $schema?: string,
@@ -11,14 +11,20 @@ export type ThemeConfig = {
 
   // lightningcss stuff
   drafts?: Drafts,
-  features?: typeof Features,
+  /**
+   * @see {@link https://lightningcss.dev/transpilation.html#feature-flags} for further information.
+   */
+  features?: number,
 };
 
 export type ClientExport = (config: ThemeConfig) => {
   name: string,
   fileName: string,
   drafts?: Drafts,
-  features?: typeof Features,
+  /**
+   * @see {@link https://lightningcss.dev/transpilation.html#feature-flags} for further information.
+   */
+  features?: number,
   targets?: string | readonly string[],
 } & (archiveTypes | fileTypes);
 
