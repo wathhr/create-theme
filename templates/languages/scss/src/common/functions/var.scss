@@ -1,0 +1,10 @@
+@use '../vars.scss' as *;
+@use './join-list.scss' as *;
+
+@function var($name...) {
+  @return unquote("var(--#{$theme-name}-#{join-list($name, '-')})");
+}
+
+@function v($name...) {
+  @return var($name...);
+}

@@ -1,0 +1,33 @@
+@use './vars.scss' as *;
+
+$vars: (
+  sidebar: (
+    color: red,
+    width: 500px,
+    user-area: (
+      color: blue,
+    ),
+  ),
+  font: "cursive",
+) !default;
+
+//! https://stackoverflow.com/a/72114019
+@mixin map-convert-css-vars(
+  $map,
+  $prefix,
+  $key: ''
+) {
+  @each $name, $value in $map {
+    $key-copy: $key;
+    $key: #{$key}-#{$name};
+    @if (type-of($value) == 'map') {
+      @include map-convert-css-vars($value, $prefix, $key);
+    } @else {
+      --#{$prefix}#{$key}: #{$value};
+    }
+    $key: $key-copy;
+  }
+}
+:not(#{$theme-name}):root {
+  @include map-convert-css-vars($vars, $theme-name);
+}

@@ -283,6 +283,8 @@ if ((await readdir3(themePath)).length > 0) {
 }
 await mergeDirs(themePath, baseTemplate, languageTemplate, ...extrasTemplates);
 spinner2.message("Replacing metadata...");
+if (registeredOpts.get("language").value === "scss")
+  metaFiles.push("src/common/vars.scss");
 for (const file of metaFiles) {
   const filePath = join4(themePath, file);
   if (!exists2(filePath))
