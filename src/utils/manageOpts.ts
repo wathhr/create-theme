@@ -1,21 +1,20 @@
 import * as clack from '@clack/prompts';
-import type { ArgumentValue, RegisteredOpt } from '@root/types';
+import type { ArgumentValue, RegisteredOptions } from '@root/types';
 import { useDefaults } from '..';
 import { extraOptionData, options } from '@constants';
 
-export const registeredOpts = new Map<string, RegisteredOpt>(); // TODO: Make this more typesafe
+export const registeredOpts = {} as RegisteredOptions;
 
 export async function register(name: keyof typeof options, arg: ArgumentValue) {
-  if (registeredOpts.has(name)) throw new Error(`"${name}" is already registered.`);
   const extra = extraOptionData[name];
   const prompted = !useDefaults && arg === undefined && extra.prompt;
 
-  const value: ArgumentValue | symbol = arg ?? await (async (): Promise<ArgumentValue | symbol> => {
+  const value: ArgumentValue | typeof extra['default'] | symbol = arg ?? await (async (): Promise<typeof extra['default'] | symbol> => {
     if (!prompted) return extra.default;
     if (!('type' in extra)) return await clack.text({
       message: extra.message,
-      defaultValue: extra.default,
-      placeholder: extra.default,
+      defaultValue: extra.default.toString(),
+      placeholder: extra.default.toString(),
     });
 
     switch (extra.type) {
@@ -39,7 +38,7 @@ export async function register(name: keyof typeof options, arg: ArgumentValue) {
 
   if (clack.isCancel(value)) {
     clack.cancel('Operation cancelled.');
-    process.exit(0);
+    process.exit(1);
   }
   if (typeof value === 'symbol') {
     clack.cancel('Received unexpected value');
@@ -58,11 +57,6 @@ export async function register(name: keyof typeof options, arg: ArgumentValue) {
     }
   }
 
-  const result: RegisteredOpt = {
-    prompted,
-    value
-  };
-
-  registeredOpts.set(name, result);
-  return result;
+  // @ts-expect-error idk how to fix `values`'s type, checks are made so this works fine
+  return registeredOpts[name] = { prompted, value };
 }

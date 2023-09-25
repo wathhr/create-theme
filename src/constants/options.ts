@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { ParseArgsConfig } from 'node:util';
 import { readdir } from 'node:fs/promises';
-import type { ExtraOptionData } from '@root/types.d.ts';
+import type { ExtraOptionDataObject } from '@root/types.d.ts';
 import { root } from './misc';
 
 export const options = {
@@ -63,7 +63,7 @@ export const extraOptionData = {
   author: {
     prompt: true,
     message: 'Who is the author?',
-    default: 'Author',
+    default: ['Author'],
   },
   version: {
     prompt: false,
@@ -100,6 +100,6 @@ export const extraOptionData = {
             .join(' '),
         };
       }),
-    default: [],
+    default: [] as string[],
   }
-} satisfies Record<keyof typeof options, ExtraOptionData>;
+} satisfies ExtraOptionDataObject;

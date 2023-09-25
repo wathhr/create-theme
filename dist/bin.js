@@ -89,7 +89,7 @@ var extraOptionData = {
   author: {
     prompt: true,
     message: "Who is the author?",
-    default: "Author"
+    default: ["Author"]
   },
   version: {
     prompt: false,
@@ -122,10 +122,8 @@ var extraOptionData = {
 };
 
 // src/utils/manageOpts.ts
-var registeredOpts = /* @__PURE__ */ new Map();
+var registeredOpts = {};
 async function register(name, arg) {
-  if (registeredOpts.has(name))
-    throw new Error(`"${name}" is already registered.`);
   const extra = extraOptionData[name];
   const prompted = !useDefaults && arg === void 0 && extra.prompt;
   const value = arg ?? await (async () => {
@@ -134,8 +132,8 @@ async function register(name, arg) {
     if (!("type" in extra))
       return await clack.text({
         message: extra.message,
-        defaultValue: extra.default,
-        placeholder: extra.default
+        defaultValue: extra.default.toString(),
+        placeholder: extra.default.toString()
       });
     switch (extra.type) {
       case "select": {
@@ -157,7 +155,7 @@ async function register(name, arg) {
   })();
   if (clack.isCancel(value)) {
     clack.cancel("Operation cancelled.");
-    process.exit(0);
+    process.exit(1);
   }
   if (typeof value === "symbol") {
     clack.cancel("Received unexpected value");
@@ -168,12 +166,7 @@ async function register(name, arg) {
       throw new Error(`"${value}" is not a valid value for option "${name}"`);
     }
   }
-  const result = {
-    prompted,
-    value
-  };
-  registeredOpts.set(name, result);
-  return result;
+  return registeredOpts[name] = { prompted, value };
 }
 
 // src/utils/mergeDirs.ts
@@ -247,7 +240,7 @@ async function replaceMeta(file) {
   });
   const regex = new RegExp(`__theme(${configKeys.map((key) => key[0].toUpperCase() + key.slice(1)).join("|")})__`, "g");
   const newContent = content.replace(regex, (_, group) => {
-    return (registeredOpts.get(group.toLowerCase())?.value ?? extraOptionData[group].default).toString();
+    return registeredOpts[group.toLowerCase()].value ?? extraOptionData[group].default;
   });
   await writeFile2(file, newContent).catch((e) => {
     throw new Error(`Failed to write file "${file}":`, e);
@@ -266,12 +259,12 @@ for (const o in options) {
   const opt = o;
   await register(opt, values[opt]);
 }
+var themePath = resolve(process.cwd(), registeredOpts.path.value);
+var baseTemplate = join4(root, "templates/base");
+var languageTemplate = join4(root, "templates/languages", registeredOpts.language.value);
+var extrasTemplates = registeredOpts.extras.value.map((e) => join4(root, "templates/extras", e));
 var spinner2 = clack2.spinner();
 spinner2.start("Copying project files...");
-var themePath = resolve(process.cwd(), registeredOpts.get("path").value.toString());
-var baseTemplate = join4(root, "templates/base");
-var languageTemplate = join4(root, "templates/languages", registeredOpts.get("language").value.toString());
-var extrasTemplates = registeredOpts.get("extras").value.map((e) => join4(root, "templates/extras", e));
 await ensureDir(themePath);
 if ((await readdir3(themePath)).length > 0) {
   const force = await clack2.confirm({
@@ -283,7 +276,7 @@ if ((await readdir3(themePath)).length > 0) {
 }
 await mergeDirs(themePath, baseTemplate, languageTemplate, ...extrasTemplates);
 spinner2.message("Replacing metadata...");
-if (registeredOpts.get("language").value === "scss")
+if (registeredOpts.language.value === "scss")
   metaFiles.push("src/common/vars.scss");
 for (const file of metaFiles) {
   const filePath = join4(themePath, file);

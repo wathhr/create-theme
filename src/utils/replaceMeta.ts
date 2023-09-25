@@ -14,8 +14,8 @@ export async function replaceMeta(file: string) {
       .join('|')})__`, 'g');
 
   const newContent = content.replace(regex, (_, group: string) => {
-    return ((registeredOpts.get(group.toLowerCase())?.value
-      ?? extraOptionData[group].default)).toString();
+    return ((registeredOpts[group.toLowerCase()].value
+      ?? extraOptionData[group].default));
   });
 
   await writeFile(file, newContent).catch((e) => {
