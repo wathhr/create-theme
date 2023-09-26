@@ -278,6 +278,8 @@ await mergeDirs(themePath, baseTemplate, languageTemplate, ...extrasTemplates);
 spinner2.message("Replacing metadata...");
 if (registeredOpts.language.value === "scss")
   metaFiles.push("src/common/vars.scss");
+if (registeredOpts.extras.value.includes("dot-github-folder"))
+  metaFiles.push(".github/CODEOWNERS");
 for (const file of metaFiles) {
   const filePath = join4(themePath, file);
   if (!exists2(filePath))

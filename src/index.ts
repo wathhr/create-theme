@@ -43,7 +43,9 @@ if ((await readdir(themePath)).length > 0) {
 await mergeDirs(themePath, baseTemplate, languageTemplate, ...extrasTemplates);
 
 spinner.message('Replacing metadata...');
+// TODO: Remove hardcoded file paths
 if (registeredOpts.language.value === 'scss') metaFiles.push('src/common/vars.scss');
+if (registeredOpts.extras.value.includes('dot-github-folder')) metaFiles.push('.github/CODEOWNERS');
 for (const file of metaFiles) {
   const filePath = join(themePath, file);
   if (!exists(filePath)) continue;
