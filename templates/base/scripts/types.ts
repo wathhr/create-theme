@@ -1,4 +1,5 @@
 import { Drafts } from 'lightningcss';
+import { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package';
 
 export type ThemeConfig = {
   $schema?: string,
@@ -17,7 +18,7 @@ export type ThemeConfig = {
   features?: number,
 };
 
-export type ClientExport = (config: ThemeConfig) => {
+export type ClientExport = (config: ThemeConfig, pkg: JSONSchemaForNPMPackageJsonFiles) => {
   name: string,
   fileName: string,
   drafts?: Drafts,

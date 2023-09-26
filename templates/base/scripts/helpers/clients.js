@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import { join } from 'node:path';
 
 /** @type {ClientExport} */
-export function betterDiscord(config) {
+export function betterDiscord(config, pkg) {
   return {
     name: 'BetterDiscord',
     fileName: config.name + '.theme.css',
@@ -17,7 +17,7 @@ export function betterDiscord(config) {
       ` * @author ${config.author}`,
       ` * @source https://github.com/${config.author}/${config.name}`,
       ` * @version ${config.version}`,
-      ' * @license GNU GPLv3',
+      pkg.license || ` * @license ${pkg.license}`,
       ' */',
       '',
       content
@@ -26,7 +26,7 @@ export function betterDiscord(config) {
 }
 
 /** @type {ClientExport} */
-export function stylus(config) {
+export function stylus(config, pkg) {
   return {
     name: 'Stylus',
     fileName: config.name + '.user.css',
@@ -40,7 +40,7 @@ export function stylus(config) {
       `@author ${config.author}`,
       `@updateURL https://github.com/${config.author}/${config.name}/blob/main/dist/${config.name}.user.css`,
       `@version ${config.version}`,
-      '@license GNU GPLv3',
+      pkg.license || `@license ${pkg.license}`,
       '==/UserStyle== */',
       '',
       '@-moz-document regexp(\'^https?:\\/\\/(?:(?:ptb|canary)\\.)?discord\\.com\\/(app|activity|channels((?:\\/\\d+)+|\\/@me(\\/\\d*)?)|store(?:\\/skus.*)?|library(?:\\/settings)?|guild-discovery|login|oauth2\\/authorize.*)\\/?$\') {',

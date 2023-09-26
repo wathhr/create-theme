@@ -1,4 +1,8 @@
 {
+  "name": "__themeName__",
+  "author": "__themeAuthor__",
+  "version": "0.0.0",
+  "description": "__themeDescription__",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.js",
@@ -10,5 +14,8 @@
     "browserslist": "^4.21.10",
     "lightningcss": "^1.21.7",
     "throttle-debounce": "^5.0.0"
+  },
+  "devDependencies": {
+    "@schemastore/package": "^0.0.10"
   }
 }

@@ -108,7 +108,7 @@ if (values.watch) {
 async function build(client) {
   if (!(client in clientExports)) throw new Error(`No export for client "${client}"`);
   /** @type {ReturnType<ClientExport>} */
-  const clientExport = clientExports[client](config);
+  const clientExport = clientExports[client](config, require('../package.json'));
   const outputLocation = join(values.output, clientExport.fileName);
 
   /** @type {{ preprocess?: PreprocessExport, postprocess?: PostprocessExport }} */
