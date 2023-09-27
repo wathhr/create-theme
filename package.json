@@ -9,8 +9,9 @@
     "lint": "eslint .",
     "test": "node dist/bin.js",
     "build": "node scripts/build.js",
-    "schema": "ts-json-schema-generator --path src/types.d.ts --type ThemeConfig > dist/schema.json",
-    "prepare": "npm run build && npm run schema"
+    "updateDeps": "./scripts/updateDeps.ps1",
+    "schema": "ts-json-schema-generator --path src/types.d.ts --type ThemeConfig -f tsconfig.json > dist/schema.json",
+    "prepublish": "npm run build && npm run schema"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.2",

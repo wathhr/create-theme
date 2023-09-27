@@ -18,6 +18,15 @@
         "$schema": {
           "type": "string"
         },
+        "aliases": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "type": "object"
+        },
         "author": {
           "type": "string"
         },
@@ -39,16 +48,29 @@
         "preferredClient": {
           "type": "string"
         },
+        "targets": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
         "version": {
           "type": "string"
         }
       },
       "required": [
-        "name",
-        "description",
         "author",
-        "version",
-        "inputFile"
+        "description",
+        "inputFile",
+        "name",
+        "version"
       ],
       "type": "object"
     }
