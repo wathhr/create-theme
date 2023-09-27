@@ -2,9 +2,69 @@
 /** @typedef {import('../types').PreprocessExport} PreprocessExport */
 /** @typedef {import('../types').PostprocessExport} PostprocessExport */
 
-import { compileAsync } from 'sass';
+import { join } from 'path';
+import { existsSync, statSync } from 'fs';
+import sass, { compile } from 'sass';
+import { pathToFileURL } from 'url';
+
+/**
+ * @param {string} string
+ * @returns {RegExp}
+ */
+function stringToRegex(string) {
+  const flagRegex = /(?<=\/)[gmiyusd]*$/;
+  const expression = string.replace(flagRegex, '').slice(1).slice(0, -1);
+  const flags = string.match(flagRegex)?.[0];
+  return new RegExp(expression, flags);
+}
 
 /** @type {PreprocessExport} */
-export const preprocess = async (file) => {
-  return (await compileAsync(file)).css;
+export const preprocess = (file, { args, config, root }) => {
+  const aliasRegex = new RegExp(`^(?<main>${Object.keys(config.paths ?? {}).join('|')})(?<path>.*)`);
+
+  const { css } = compile(file, {
+    functions: {
+      'regex-test($string, $regex)': (args) => {
+        const params = args.map((p) => p.toString().replace(/^['"]|['"]$/g, ''));
+        const string = params[0];
+        const regex = stringToRegex(params[1]);
+
+        const match = regex.test(string);
+        return match ? sass.sassTrue : sass.sassFalse;
+      },
+      'regex-replace($string, $regex, $replace)': (args) => {
+        const params = args.map((p) => p.toString().replace(/^['"]|['"]$/g, ''));
+        const string = params[0];
+        const regex = stringToRegex(params[1]);
+        const replace = params[2];
+
+        const replaced = string.replace(regex, replace);
+        return new sass.SassString(replaced);
+      },
+    },
+    importers: [{
+      findFileUrl(url) {
+        if (!config.paths) return null;
+
+        const match = url.match(aliasRegex);
+        const mainGroup = match?.groups?.main;
+        if (!match || !mainGroup) return null;
+        if (!(mainGroup in (config.paths ?? {}))) return null;
+        const pathGroup = match.groups?.path;
+
+        const possiblePaths = config.paths[mainGroup]
+          .map((path) => join(root, path, pathGroup ?? ''))
+          .filter((path) => existsSync(path) && statSync(path).isFile());
+
+        if (possiblePaths.length === 0) throw new Error(`No valid paths for ${url}`);
+
+        return new URL(pathToFileURL(possiblePaths[0]));
+      }
+    }],
+    style: (process.env.NODE_ENV ? process.env.NODE_ENV === 'development' : !args.watch)
+      ? 'expanded'
+      : 'compressed',
+  });
+
+  return css;
 };

@@ -3,12 +3,14 @@ import { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package';
 
 export type ThemeConfig = {
   $schema?: string,
-  name: string,
-  description: string,
   author: string,
-  version: string,
+  description: string,
   inputFile: string,
+  name: string,
+  paths?: Record<string, string[]>,
   preferredClient?: string,
+  targets?: string | readonly string[],
+  version: string,
 
   // lightningcss stuff
   drafts?: Drafts,
@@ -33,6 +35,7 @@ type Extras = {
   args: Record<string, any>, // TODO: Improve type
   clientExport: ReturnType<ClientExport>,
   config: ThemeConfig,
+  pkg: JSONSchemaForNPMPackageJsonFiles,
   root: string,
 };
 

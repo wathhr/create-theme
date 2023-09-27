@@ -1,3 +1,8 @@
 {
-  "inputFile": "./src/main/_index.scss"
+  "inputFile": "./src/main/_index.scss",
+  "paths": {
+    "@common": [
+      "src/common"
+    ]
+  }
 }

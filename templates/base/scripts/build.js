@@ -1,7 +1,8 @@
 // @ts-check
 /** @typedef {import('./types').ClientExport} ClientExport */
-/** @typedef {import('./types').PreprocessExport} PreprocessExport */
 /** @typedef {import('./types').PostprocessExport} PostprocessExport */
+/** @typedef {import('./types').PreprocessExport} PreprocessExport */
+/** @typedef {import('@schemastore/package').JSONSchemaForNPMPackageJsonFiles} JSONSchemaForNPMPackageJsonFiles */
 
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
@@ -30,6 +31,9 @@ for (const key of configKeys) {
   if (key in config) continue;
   throw new Error(`"${key}" is missing from your "theme.config.json"`);
 }
+
+/** @type {JSONSchemaForNPMPackageJsonFiles} */
+const pkg = require('../package.json');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -108,7 +112,7 @@ if (values.watch) {
 async function build(client) {
   if (!(client in clientExports)) throw new Error(`No export for client "${client}"`);
   /** @type {ReturnType<ClientExport>} */
-  const clientExport = clientExports[client](config, require('../package.json'));
+  const clientExport = clientExports[client](config, pkg);
   const outputLocation = join(values.output, clientExport.fileName);
 
   /** @type {{ preprocess?: PreprocessExport, postprocess?: PostprocessExport }} */
@@ -130,6 +134,7 @@ async function build(client) {
     args: values,
     clientExport: clientExport,
     config: config,
+    pkg,
     root,
   };
 
@@ -137,7 +142,7 @@ async function build(client) {
     var preprocessed = await preprocess(values.input, extras);
     var css = await postprocess(values.input, preprocessed, extras);
   } catch (e) {
-    console.error('Failed to compile source code:', e?.message);
+    console.error('Failed to compile source code.', e);
     process.exit(1);
   }
 
