@@ -18,15 +18,6 @@
         "$schema": {
           "type": "string"
         },
-        "aliases": {
-          "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "type": "object"
-        },
         "author": {
           "type": "string"
         },
@@ -44,6 +35,15 @@
         },
         "name": {
           "type": "string"
+        },
+        "paths": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "type": "object"
         },
         "preferredClient": {
           "type": "string"
