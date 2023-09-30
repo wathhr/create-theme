@@ -56,9 +56,13 @@ export function replugged(config) {
     name: 'Replugged',
     fileName: `dev.${config.author}.${config.name}.asar`,
     type: 'asar',
-    async compile(content, root, tmpDir) {
+    async compile({ content, root, tmpDir }) {
       await fs.copyFile(join(root, 'manifest.json'), join(tmpDir, 'manifest.json'));
       await fs.writeFile(join(tmpDir, 'dist.css'), content);
     },
+    async postRun() {
+      const socket = (await import('../utils/replugged.js')).default;
+      if (socket) await socket.reload();
+    }
   };
 }

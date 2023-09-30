@@ -152,20 +152,21 @@ async function build(client) {
     else {
       const tmpDir = join(await realpath(tmpdir()), client);
       mkdir(tmpDir, { recursive: true });
-      await clientExport.compile(css, root, tmpDir);
+      await clientExport.compile({
+        content: css,
+        root,
+        tmpDir
+      });
       await asar.createPackage(tmpDir, outputLocation);
       await rm(tmpDir, {
         recursive: true,
         force: true,
       });
     }
+
+    await clientExport.postRun?.();
   } catch (e) {
     // TODO: Handle errors on the callers (removing the try catch just exists the app on error for some reason)
     console.error((values.watch ? '' : `Failed to compile for client ${client}: `) + e);
-  }
-
-  if (client === 'replugged') {
-    const socket = await new (await import('./utils/replugged.js')).default().start();
-    await socket.reload();
   }
 }

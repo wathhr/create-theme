@@ -22,7 +22,7 @@ function parse(text) {
   }
 }
 
-export class RepluggedSocket {
+export const RepluggedSocket = await new class RepluggedSocket {
   #minPort = 6463;
   #maxPort = 6472;
   #num = 0;
@@ -32,11 +32,8 @@ export class RepluggedSocket {
   async start() {
     for (let port = this.#minPort; port <= this.#maxPort; port++) {
       try {
-        log('Trying port', port);
         this.#ws = await this.#tryPort(port);
-      } catch (e) {
-        log('Failed.');
-      }
+      } catch {/* unnecessary */}
     }
 
     if (this.#ws?.readyState !== WebSocket.OPEN) throw new Error('Failed to connect to WebSocket.');
@@ -97,6 +94,6 @@ export class RepluggedSocket {
 
     ws.on('message', handleMessage);
   }
-}
+}().start();
 
 export default RepluggedSocket;

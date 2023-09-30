@@ -14,22 +14,9 @@ export type ThemeConfig = {
 
   // lightningcss stuff
   drafts?: Drafts,
-  /**
-   * @see {@link https://lightningcss.dev/transpilation.html#feature-flags} for further information.
-   */
+  /** @see {@link https://lightningcss.dev/transpilation.html#feature-flags} for further information. */
   features?: number,
 };
-
-export type ClientExport = (config: ThemeConfig, pkg: JSONSchemaForNPMPackageJsonFiles) => {
-  name: string,
-  fileName: string,
-  drafts?: Drafts,
-  /**
-   * @see {@link https://lightningcss.dev/transpilation.html#feature-flags} for further information.
-   */
-  features?: number,
-  targets?: string | readonly string[],
-} & (archiveTypes | fileTypes);
 
 type Extras = {
   args: Record<string, any>, // TODO: Improve type
@@ -47,21 +34,33 @@ type PostprocessAsync = (file: string, content: string, extras: Extras) => Promi
 export type PreprocessExport = PreprocessSync | PreprocessAsync;
 export type PostprocessExport = PostprocessSync | PostprocessAsync;
 
+export type ClientExport = (config: ThemeConfig, pkg: JSONSchemaForNPMPackageJsonFiles) => {
+  name: string,
+  fileName: string,
+  postRun?: () => void | Promise<void>,
+  drafts?: Drafts,
+  /** @see {@link https://lightningcss.dev/transpilation.html#feature-flags} for further information. */
+  features?: number,
+  /** @see {@link https://github.com/browserslist/browserslist#full-list} for further information. */
+  targets?: string | readonly string[],
+} & (archiveTypes | fileTypes);
+
 type archiveTypes = {
   type: 'asar',
   /**
    * `tmpDir` is the directory that gets packed
    *
+   * @param data.content The compiled css
+   * @param data.root The root directory of the theme
+   * @param data.tmpDir A temporary directory
+   *
    * @example
-   * async compile(content, root, tmpDir) {
+   * async compile({ content, root, tmpDir }) {
    *   await fs.copyFile(join(root, 'manifest.json'), join(tmpDir, 'manifest.json'));
    *   await fs.writeFile(join(tmpDir, 'dist.css'), content);
    * }
-   * @param content The compiled css
-   * @param root The root directory of the theme
-   * @param tmpDir A temporary directory
    */
-  compile(content: string, root: string, tmpDir: string): void | Promise<void>,
+  compile(data: { content: string, root: string, tmpDir: string }): void | Promise<void>,
 };
 type fileTypes = {
   type: 'file',
