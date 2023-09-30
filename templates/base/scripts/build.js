@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // @ts-check
 /** @typedef {import('./types').ClientExport} ClientExport */
 /** @typedef {import('./types').PostprocessExport} PostprocessExport */
@@ -161,5 +162,10 @@ async function build(client) {
   } catch (e) {
     // TODO: Handle errors on the callers (removing the try catch just exists the app on error for some reason)
     console.error((values.watch ? '' : `Failed to compile for client ${client}: `) + e);
+  }
+
+  if (client === 'replugged') {
+    const socket = await new (await import('./utils/replugged.js')).default().start();
+    await socket.reload();
   }
 }
