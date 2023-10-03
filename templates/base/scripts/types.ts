@@ -1,5 +1,4 @@
 import { Drafts } from 'lightningcss';
-import { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package';
 
 export type ThemeConfig = {
   $schema?: string,
@@ -9,6 +8,7 @@ export type ThemeConfig = {
   name: string,
   paths?: Record<string, string[]>,
   preferredClient?: string,
+  splashInputFile?: string,
   targets?: string | readonly string[],
   version: string,
 
@@ -20,10 +20,7 @@ export type ThemeConfig = {
 
 type Extras = {
   args: Record<string, any>, // TODO: Improve type
-  clientExport: ReturnType<ClientExport>,
-  config: ThemeConfig,
-  pkg: JSONSchemaForNPMPackageJsonFiles,
-  root: string,
+  clientExport: ClientExport,
 };
 
 // 🥰🥰🥰
@@ -34,9 +31,10 @@ type PostprocessAsync = (file: string, content: string, extras: Extras) => Promi
 export type PreprocessExport = PreprocessSync | PreprocessAsync;
 export type PostprocessExport = PostprocessSync | PostprocessAsync;
 
-export type ClientExport = (config: ThemeConfig, pkg: JSONSchemaForNPMPackageJsonFiles) => {
+export type ClientExport = {
   name: string,
   fileName: string,
+  splash?: boolean,
   postRun?: () => void | Promise<void>,
   drafts?: Drafts,
   /** @see {@link https://lightningcss.dev/transpilation.html#feature-flags} for further information. */
@@ -51,7 +49,7 @@ type archiveTypes = {
    * `tmpDir` is the directory that gets packed
    *
    * @param data.content The compiled css
-   * @param data.root The root directory of the theme
+   * @param data.splashContent The compiled css for the splashscreen (only available when `splash` is truthy & `splashInputFile` is set)
    * @param data.tmpDir A temporary directory
    *
    * @example
@@ -60,7 +58,7 @@ type archiveTypes = {
    *   await fs.writeFile(join(tmpDir, 'dist.css'), content);
    * }
    */
-  compile(data: { content: string, root: string, tmpDir: string }): void | Promise<void>,
+  compile(data: { content: string, splashContent?: string, tmpDir: string }): void | Promise<void>,
 };
 type fileTypes = {
   type: 'file',

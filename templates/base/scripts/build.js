@@ -5,13 +5,13 @@
 /** @typedef {import('./types').PreprocessExport} PreprocessExport */
 /** @typedef {import('@schemastore/package').JSONSchemaForNPMPackageJsonFiles} JSONSchemaForNPMPackageJsonFiles */
 
-import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
-import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
-import { parseArgs } from 'node:util';
-import { tmpdir } from 'node:os';
+import { createRequire } from 'module';
+import { dirname, join } from 'path';
+import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { mkdir, readFile, realpath, rm, writeFile } from 'fs/promises';
+import { parseArgs } from 'util';
+import { tmpdir } from 'os';
 import asar from '@electron/asar';
 import browserslist from 'browserslist';
 import parcelWatcher from '@parcel/watcher';
@@ -33,9 +33,6 @@ for (const key of configKeys) {
   throw new Error(`"${key}" is missing from your "theme.config.json"`);
 }
 
-/** @type {JSONSchemaForNPMPackageJsonFiles} */
-const pkg = require('../package.json');
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = join(__dirname, '..');
@@ -45,6 +42,10 @@ const { values: args, positionals } = parseArgs({
     input: {
       type: 'string',
       short: 'i',
+    },
+    splashInput: {
+      type: 'string',
+      short: 's',
     },
     output: {
       type: 'string',
@@ -65,6 +66,7 @@ const { values: args, positionals } = parseArgs({
 
 const defaults = {
   input: positionals.at(-1) ?? join(root, config.inputFile),
+  splashInput: join(root, config.splashInputFile ?? ''),
   output: join(root, 'dist/'),
   client: args.watch ? [config.preferredClient || 'betterDiscord'] : ['all'],
   watch: false
@@ -88,32 +90,32 @@ if (values.watch) {
   if (values.client.length > 1) throw new Error('Only 1 client is allowed on watch mode.');
   const client = values.client[0];
 
-  await build(client);
   console.log('Watching...');
+  await build(client);
   const watcher = await parcelWatcher.subscribe(join(root, 'src'), debounce(100, async (err, events) => {
     if (err) throw err;
 
     for (const event of events) {
       console.log(`[${new Date().toLocaleTimeString()}] Caught event "${event.type}" at "${event.path}"`);
     }
-    await build(client);
+    await build(client).catch(console.error);
   }));
 
   process.on('beforeExit', watcher.unsubscribe);
 } else {
   for (const client of values.client) {
-    await build(client);
+    await build(client).catch(console.error);
   }
 }
 
 /**
  * Runs the build process for the specified client
  * @param {string} client The export name of the client
-*/
+ */
 async function build(client) {
-  if (!(client in clientExports)) throw new Error(`No export for client "${client}"`);
-  /** @type {ReturnType<ClientExport>} */
-  const clientExport = clientExports[client](config, pkg);
+  if (!(client in clientExports)) throw `No export for client "${client}"`;
+  /** @type {ClientExport} */
+  const clientExport = clientExports[client];
   const outputLocation = join(values.output, clientExport.fileName);
 
   /** @type {{ preprocess?: PreprocessExport, postprocess?: PostprocessExport }} */
@@ -134,18 +136,29 @@ async function build(client) {
   const extras = {
     args: values,
     clientExport: clientExport,
-    config: config,
-    pkg,
-    root,
   };
 
-  try {
-    var preprocessed = await preprocess(values.input, extras);
-    var css = await postprocess(values.input, preprocessed, extras);
-  } catch (e) {
-    console.error('Failed to compile source code.', e);
-    process.exit(1);
-  }
+  const css = await (async () => {
+    try {
+      const preprocessed = await preprocess(values.input, extras);
+      return await postprocess(values.input, preprocessed, extras);
+    } catch (e) {
+      console.error('Failed to compile source code.', e);
+      process.exit(1);
+    }
+  })();
+
+  const splashCss = await (async () => {
+    if ('splashInputFile' in config) return undefined;
+
+    try {
+      const preprocessed = await preprocess(values.splashInput, extras);
+      return await postprocess(values.splashInput, preprocessed, extras);
+    } catch (e) {
+      console.error('Failed to compile splash source code.', e);
+      process.exit(1);
+    }
+  })();
 
   try {
     if (clientExport.type === 'file') writeFile(outputLocation, clientExport.compile(css));
@@ -154,8 +167,8 @@ async function build(client) {
       mkdir(tmpDir, { recursive: true });
       await clientExport.compile({
         content: css,
-        root,
-        tmpDir
+        splashContent: splashCss ?? undefined,
+        tmpDir,
       });
       await asar.createPackage(tmpDir, outputLocation);
       await rm(tmpDir, {
@@ -164,9 +177,14 @@ async function build(client) {
       });
     }
 
+  } catch (e) {
+    throw [`Failed to compile for client ${clientExport.name}: `, e];
+  }
+
+  try {
     await clientExport.postRun?.();
   } catch (e) {
-    // TODO: Handle errors on the callers (removing the try catch just exists the app on error for some reason)
-    console.error((values.watch ? '' : `Failed to compile for client ${client}: `) + e);
+    throw [`Failed to run postrun script for client ${clientExport.name}: `, e];
   }
+  console.log(`Built ${clientExport.name} successfully.`);
 }

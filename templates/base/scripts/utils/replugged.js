@@ -1,10 +1,8 @@
-#!/usr/bin/env node
+#!/bin/false
 // @ts-check
 
 import WebSocket from 'ws';
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-const manifest = require('../../manifest.json');
+import { replugged } from '../helpers/clients.js';
 
 /** @param {any[]} args */
 const log = (...args) => console.log('[Replugged Socket]', ...args);
@@ -33,13 +31,15 @@ export const RepluggedSocket = await new class RepluggedSocket {
     for (let port = this.#minPort; port <= this.#maxPort; port++) {
       try {
         this.#ws = await this.#tryPort(port);
-      } catch {/* unnecessary */}
+      } catch {/* Omitted */ }
     }
 
-    if (this.#ws?.readyState !== WebSocket.OPEN) throw new Error('Failed to connect to WebSocket.');
-    log('Connected.');
-
+    if (this.#ws?.readyState !== WebSocket.OPEN) throw 'Failed to connect to WebSocket.';
     return this;
+  }
+
+  close() {
+    this.#ws?.close();
   }
 
   /** @param {number} port */
@@ -70,7 +70,7 @@ export const RepluggedSocket = await new class RepluggedSocket {
       JSON.stringify({
         cmd: 'REPLUGGED_ADDON_WATCHER',
         args: {
-          id: manifest.id,
+          id: replugged.fileName.slice(0, -4),
         },
         nonce: this.#num,
       }),

@@ -1,3 +1,5 @@
+#!/bin/false
+
 // @ts-check
 /** @typedef {import('../types').PreprocessExport} PreprocessExport */
 /** @typedef {import('../types').PostprocessExport} PostprocessExport */

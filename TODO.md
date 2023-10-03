@@ -6,7 +6,10 @@
 - [x] Add aliases for both Sass & Css
   - https://sass-lang.com/documentation/js-api/interfaces/importer/
   - https://lightningcss.dev/bundling.html#custom-resolvers
-- [ ] Figure out a good way to integrate splash screen support
+- [x] Figure out a good way to integrate splash screen support
+- [x] Make the client exports not be functions, instead just declare the variables in the file itself
+  - [ ] (?) Undo, instead add extras like process exports
+- [x] Reduce the extras for the process exports
 
 ## Main
 - [ ] Add support for arrays in meta replacing (ie multiple authors)

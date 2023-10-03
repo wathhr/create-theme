@@ -2,10 +2,19 @@
 /** @typedef {import('../types').PreprocessExport} PreprocessExport */
 /** @typedef {import('../types').PostprocessExport} PostprocessExport */
 
-import { join } from 'path';
-import { existsSync, statSync } from 'fs';
 import sass, { compile } from 'sass';
-import { pathToFileURL } from 'url';
+import { createRequire } from 'module';
+import { dirname, join } from 'path';
+import { existsSync, statSync } from 'fs';
+import { fileURLToPath, pathToFileURL } from 'url';
+const require = createRequire(import.meta.url);
+
+/** @type {import('../types').ThemeConfig} */
+const config = require('../../theme.config.json');
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const root = join(__dirname, '../..');
 
 /**
  * @param {string} string
@@ -19,7 +28,7 @@ function stringToRegex(string) {
 }
 
 /** @type {PreprocessExport} */
-export const preprocess = (file, { args, config, root }) => {
+export const preprocess = (file, { args }) => {
   const aliasRegex = new RegExp(`^(?<main>${Object.keys(config.paths ?? {}).join('|')})(?<path>.*)`);
 
   const { css } = compile(file, {
@@ -56,7 +65,7 @@ export const preprocess = (file, { args, config, root }) => {
           .map((path) => join(root, path, pathGroup ?? ''))
           .filter((path) => existsSync(path) && statSync(path).isFile());
 
-        if (possiblePaths.length === 0) throw new Error(`No valid paths for ${url}`);
+        if (possiblePaths.length === 0) throw `No valid paths for ${url}`;
 
         return new URL(pathToFileURL(possiblePaths[0]));
       }

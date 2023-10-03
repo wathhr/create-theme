@@ -2,13 +2,23 @@
 /** @typedef {import('../types').PreprocessExport} PreprocessExport */
 /** @typedef {import('../types').PostprocessExport} PostprocessExport */
 
+import { createRequire } from 'module';
 import { dirname, join } from 'path';
 import { existsSync, readFileSync, statSync } from 'fs';
+import { fileURLToPath } from 'url';
 import browserslist from 'browserslist';
 import { browserslistToTargets, bundleAsync } from 'lightningcss';
+const require = createRequire(import.meta.url);
+
+/** @type {import('../types').ThemeConfig} */
+const config = require('../../theme.config.json');
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const root = join(__dirname, '../..');
 
 /** @type {PreprocessExport} */
-export const preprocess = async (file, { args, clientExport, config, root }) => {
+export const preprocess = async (file, { args, clientExport }) => {
   const aliasRegex = new RegExp(`^(?<main>${Object.keys(config.paths ?? {}).join('|')})(?<path>.*)`);
 
   const { code } = await bundleAsync({
@@ -34,7 +44,7 @@ export const preprocess = async (file, { args, clientExport, config, root }) => 
           .map((path) => join(root, path, pathGroup ?? ''))
           .filter((path) => existsSync(path) && statSync(path).isFile());
 
-        if (possiblePaths.length === 0) throw new Error(`No valid paths for ${specifier}`);
+        if (possiblePaths.length === 0) throw `No valid paths for ${specifier}`;
 
         return possiblePaths[0];
       }

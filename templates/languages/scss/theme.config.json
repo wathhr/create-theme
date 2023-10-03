@@ -1,5 +1,6 @@
 {
   "inputFile": "./src/main/_index.scss",
+  "splashInputFile": "./src/splash/_index.scss",
   "paths": {
     "@common": [
       "src/common"

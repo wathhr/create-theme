@@ -20,7 +20,6 @@ var __dirname = dirname(__filename);
 var root = join(__dirname, "..");
 var metaFiles = [
   "index.json",
-  "manifest.json",
   "theme.config.json"
 ];
 var configKeys = [
