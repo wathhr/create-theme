@@ -48,6 +48,9 @@
         "preferredClient": {
           "type": "string"
         },
+        "splashInputFile": {
+          "type": "string"
+        },
         "targets": {
           "anyOf": [
             {
