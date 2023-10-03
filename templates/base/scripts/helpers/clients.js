@@ -82,7 +82,7 @@ export const replugged = {
 
       description: config.description,
       version: config.version,
-      license: pkg.license,
+      license: pkg.license ?? 'Unlicense',
 
       main: 'dist.css',
       splash: splashContent && 'splash.css',
@@ -93,7 +93,7 @@ export const replugged = {
       type: 'replugged-theme',
     }));
     await fs.writeFile(join(tmpDir, 'dist.css'), content);
-    await fs.writeFile(join(tmpDir, 'splash.css'), splashContent ?? '');
+    if (splashContent) await fs.writeFile(join(tmpDir, 'splash.css'), splashContent);
   },
   async postRun() {
     // TODO: The asar file is being used while replugged is opened, a workaround might be to just copy the folder when building?
