@@ -7,7 +7,6 @@ export type ThemeConfig = {
   inputFile: string,
   name: string,
   paths?: Record<string, string[]>,
-  preferredClient?: string,
   splashInputFile?: string,
   targets?: string | readonly string[],
   version: string,
@@ -44,7 +43,7 @@ export type ClientExport = {
 } & (archiveTypes | fileTypes);
 
 type archiveTypes = {
-  type: 'asar',
+  type: 'asar' | 'zip',
   /**
    * `tmpDir` is the directory that gets packed
    *

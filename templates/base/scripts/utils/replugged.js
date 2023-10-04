@@ -31,10 +31,10 @@ export const RepluggedSocket = await new class RepluggedSocket {
     for (let port = this.#minPort; port <= this.#maxPort; port++) {
       try {
         this.#ws = await this.#tryPort(port);
-      } catch {/* Omitted */ }
+      } catch {/* Omitted */}
     }
 
-    if (this.#ws?.readyState !== WebSocket.OPEN) throw 'Failed to connect to WebSocket.';
+    if (this.#ws?.readyState !== WebSocket.OPEN) throw new Error('Failed to connect to WebSocket.');
     return this;
   }
 

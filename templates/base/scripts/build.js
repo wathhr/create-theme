@@ -7,11 +7,12 @@
 
 import { createRequire } from 'module';
 import { dirname, join } from 'path';
-import { existsSync } from 'fs';
+import { createWriteStream, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { mkdir, readFile, realpath, rm, writeFile } from 'fs/promises';
 import { parseArgs } from 'util';
 import { tmpdir } from 'os';
+import archiver from 'archiver';
 import asar from '@electron/asar';
 import browserslist from 'browserslist';
 import parcelWatcher from '@parcel/watcher';
@@ -38,6 +39,7 @@ const __dirname = dirname(__filename);
 const root = join(__dirname, '..');
 
 const { values: args, positionals } = parseArgs({
+  allowPositionals: true,
   options: {
     input: {
       type: 'string',
@@ -61,27 +63,23 @@ const { values: args, positionals } = parseArgs({
       short: 'w',
     }
   },
-  allowPositionals: true,
 });
 
 const defaults = {
   input: positionals.at(-1) ?? join(root, config.inputFile),
-  splashInput: join(root, config.splashInputFile ?? ''),
+  splashInput: config.splashInputFile ? join(root, config.splashInputFile) : undefined,
   output: join(root, 'dist/'),
-  client: args.watch ? [config.preferredClient || 'betterDiscord'] : ['all'],
+  client: args.watch ? ['default'] : ['all'],
   watch: false
 };
 /** @type {Required<typeof defaults>} */
-// @ts-expect-error For some reason it thinks the keys can be undefined?
 const values = {
   ...defaults,
-  ...args,
+  ...Object.fromEntries(Object.entries(args).filter(([_, value]) => value !== undefined)),
 };
 
 // Ensure the output directory exists
-if (!existsSync(values.output)) await mkdir(values.output, {
-  recursive: true,
-});
+if (!existsSync(values.output)) await mkdir(values.output, { recursive: true });
 
 const clientExports = await import('./helpers/clients.js');
 if (values.client.includes('all')) values.client = Object.keys(clientExports);
@@ -113,7 +111,7 @@ if (values.watch) {
  * @param {string} client The export name of the client
  */
 async function build(client) {
-  if (!(client in clientExports)) throw `No export for client "${client}"`;
+  if (!(client in clientExports)) throw new Error(`No export for client "${client}"`);
   /** @type {ClientExport} */
   const clientExport = clientExports[client];
   const outputLocation = join(values.output, clientExport.fileName);
@@ -135,7 +133,7 @@ async function build(client) {
 
   const extras = {
     args: values,
-    clientExport: clientExport,
+    clientExport,
   };
 
   const css = await (async () => {
@@ -149,7 +147,7 @@ async function build(client) {
   })();
 
   const splashCss = await (async () => {
-    if ('splashInputFile' in config) return undefined;
+    if (!values.splashInput) return undefined;
 
     try {
       const preprocessed = await preprocess(values.splashInput, extras);
@@ -161,30 +159,56 @@ async function build(client) {
   })();
 
   try {
-    if (clientExport.type === 'file') writeFile(outputLocation, clientExport.compile(css));
-    else {
-      const tmpDir = join(await realpath(tmpdir()), client);
-      mkdir(tmpDir, { recursive: true });
-      await clientExport.compile({
-        content: css,
-        splashContent: splashCss ?? undefined,
-        tmpDir,
-      });
-      await asar.createPackage(tmpDir, outputLocation);
-      await rm(tmpDir, {
-        recursive: true,
-        force: true,
-      });
-    }
+    switch (clientExport.type) {
+      case 'file': {
+        writeFile(outputLocation, clientExport.compile(css));
+      } break;
 
+      case 'asar': {
+        const tmpDir = join(await realpath(tmpdir()), client);
+        mkdir(tmpDir, { recursive: true });
+        await clientExport.compile({
+          content: css,
+          splashContent: splashCss,
+          tmpDir,
+        });
+
+        await asar.createPackage(tmpDir, outputLocation);
+        await rm(tmpDir, { recursive: true, force: true });
+      } break;
+
+      case 'zip': {
+        const tmpDir = join(await realpath(tmpdir()), client);
+        mkdir(tmpDir, { recursive: true });
+        await clientExport.compile({
+          content: css,
+          splashContent: splashCss,
+          tmpDir,
+        });
+
+        await new Promise((resolve, reject) => {
+          const archive = archiver('zip');
+          const output = createWriteStream(outputLocation);
+          output.on('close', () => resolve(true));
+          archive.on('error', reject);
+
+          archive.pipe(output);
+          archive.directory(tmpDir, false);
+          archive.finalize();
+        });
+
+        await rm(tmpDir, { recursive: true, force: true });
+      } break;
+    }
   } catch (e) {
-    throw [`Failed to compile for client ${clientExport.name}: `, e];
+    throw new Error(`Failed to compile for client ${clientExport.name}: ${e}`);
   }
 
   try {
     await clientExport.postRun?.();
   } catch (e) {
-    throw [`Failed to run postrun script for client ${clientExport.name}: `, e];
+    throw new Error(`Failed to run postrun script for client ${clientExport.name}: ${e}`);
   }
+
   console.log(`Built ${clientExport.name} successfully.`);
 }

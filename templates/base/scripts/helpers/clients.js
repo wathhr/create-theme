@@ -120,3 +120,21 @@ export const replugged = {
     }
   }
 };
+
+/** @type {ClientExport} */
+export const popcorn = {
+  name: 'Popcorn',
+  fileName: config.name + '.zip',
+  type: 'zip',
+  splash: true,
+  async compile({ content, splashContent, tmpDir }) {
+    await fs.writeFile(join(tmpDir, 'index.json'), JSON.stringify({
+      id: `${config.author}.${config.name}`,
+      description: config.description,
+      main: 'dist.css',
+      splash: 'splash.css',
+    }));
+    await fs.writeFile(join(tmpDir, 'dist.css'), content);
+    if (splashContent) await fs.writeFile(join(tmpDir, 'splash.css'), splashContent);
+  }
+};
