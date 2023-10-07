@@ -18,6 +18,7 @@ import browserslist from 'browserslist';
 import parcelWatcher from '@parcel/watcher';
 import { browserslistToTargets, transform } from 'lightningcss';
 import { debounce } from 'throttle-debounce';
+import log from './utils/logger.js';
 
 const require = createRequire(import.meta.url);
 /** @type {Required<import('./types').ThemeConfig>} */
@@ -31,7 +32,8 @@ const configKeys = [
 ];
 for (const key of configKeys) {
   if (key in config) continue;
-  throw new Error(`"${key}" is missing from your "theme.config.json"`);
+  log.error(`"${key}" is missing from your "theme.config.json"`);
+  process.exit(1);
 }
 
 const __filename = fileURLToPath(import.meta.url);
@@ -88,21 +90,21 @@ if (values.watch) {
   if (values.client.length > 1) throw new Error('Only 1 client is allowed on watch mode.');
   const client = values.client[0];
 
-  console.log('Watching...');
+  log.info('Watching...');
   await build(client);
   const watcher = await parcelWatcher.subscribe(join(root, 'src'), debounce(100, async (err, events) => {
     if (err) throw err;
 
     for (const event of events) {
-      console.log(`[${new Date().toLocaleTimeString()}] Caught event "${event.type}" at "${event.path}"`);
+      log.info(`[${new Date().toLocaleTimeString()}] Caught event "${event.type}" at "${event.path}"`);
     }
-    await build(client).catch(console.error);
+    await build(client).catch(log.error);
   }));
 
   process.on('beforeExit', watcher.unsubscribe);
 } else {
   for (const client of values.client) {
-    await build(client).catch(console.error);
+    await build(client).catch(log.error);
   }
 }
 
@@ -141,7 +143,7 @@ async function build(client) {
       const preprocessed = await preprocess(values.input, extras);
       return await postprocess(values.input, preprocessed, extras);
     } catch (e) {
-      console.error('Failed to compile source code.', e);
+      log.error('Failed to compile source code.', e);
       process.exit(1);
     }
   })();
@@ -153,7 +155,7 @@ async function build(client) {
       const preprocessed = await preprocess(values.splashInput, extras);
       return await postprocess(values.splashInput, preprocessed, extras);
     } catch (e) {
-      console.error('Failed to compile splash source code.', e);
+      log.error('Failed to compile splash source code.', e);
       process.exit(1);
     }
   })();
@@ -207,8 +209,8 @@ async function build(client) {
   try {
     await clientExport.postRun?.();
   } catch (e) {
-    throw new Error(`Failed to run postrun script for client ${clientExport.name}: ${e}`);
+    log.warn(`Failed to run postrun script for client ${clientExport.name}: ${e}`);
   }
 
-  console.log(`Built ${clientExport.name} successfully.`);
+  log.success(`Built ${clientExport.name} successfully.`);
 }

@@ -11,7 +11,6 @@
   "dependencies": {
     "@electron/asar": "^3.2.7",
     "@parcel/watcher": "^2.3.0",
-    "@types/node": "~18.18.1",
     "archiver": "^6.0.1",
     "browserslist": "^4.22.1",
     "lightningcss": "^1.22.0",
@@ -19,6 +18,7 @@
   },
   "devDependencies": {
     "@schemastore/package": "^0.0.10",
+    "@types/node": "~18.18.1",
     "ws": "^8.14.2"
   }
 }

@@ -2,11 +2,11 @@
 /** @typedef {import('../types').PreprocessExport} PreprocessExport */
 /** @typedef {import('../types').PostprocessExport} PostprocessExport */
 
-import sass, { compile } from 'sass';
 import { createRequire } from 'module';
 import { dirname, join } from 'path';
 import { existsSync, statSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
+import sass, { compile } from 'sass';
 const require = createRequire(import.meta.url);
 
 /** @type {import('../types').ThemeConfig} */
@@ -15,6 +15,8 @@ const config = require('../../theme.config.json');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = join(__dirname, '../..');
+
+const aliasRegex = new RegExp(`^(?<main>${Object.keys(config.paths ?? {}).join('|')})(?<path>.*)`);
 
 /**
  * @param {string} string
@@ -29,8 +31,6 @@ function stringToRegex(string) {
 
 /** @type {PreprocessExport} */
 export const preprocess = (file, { args }) => {
-  const aliasRegex = new RegExp(`^(?<main>${Object.keys(config.paths ?? {}).join('|')})(?<path>.*)`);
-
   const { css } = compile(file, {
     functions: {
       'regex-test($string, $regex)': (args) => {
