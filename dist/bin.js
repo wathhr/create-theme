@@ -18,10 +18,6 @@ import { fileURLToPath } from "node:url";
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = dirname(__filename);
 var root = join(__dirname, "..");
-var metaFiles = [
-  "index.json",
-  "theme.config.json"
-];
 var configKeys = [
   "name",
   "author",
@@ -29,6 +25,11 @@ var configKeys = [
   "version",
   "inputFile"
 ];
+var metaFiles = [
+  "index.json",
+  "theme.config.json"
+];
+var addMetaFiles = (...files) => metaFiles.push(...files);
 
 // src/constants/options.ts
 import { join as join2 } from "node:path";
@@ -181,8 +182,9 @@ async function mergeDirs(mainDir, ...dirs) {
     const extension = file.split(".").pop();
     const shouldSkip = (
       // Skip if:
-      specialExts.includes(extension) && // it has a special extension
-      (stat ?? await lstat(file)).isFile() && // and it's a file
+      file.endsWith("$data.json") || // the name of the file is '$data.json'
+      specialExts.includes(extension) && // OR  it has a special extension
+      (stat ?? await lstat(file)).isFile() && // AND it's a file
       await exists(mainFilePath)
     );
     return shouldSkip;
@@ -193,16 +195,22 @@ async function mergeDirs(mainDir, ...dirs) {
       errorOnExist: false,
       async filter(file) {
         const mainFilePath = join3(mainDir, relative(dir, file));
-        return !await skipCopy(file, mainFilePath);
+        const skip = await skipCopy(file, mainFilePath);
+        return !skip;
       }
     });
     const files = await readdir2(dir, { withFileTypes: true });
     for (const dirent of files) {
       const fileName = dirent.name;
       const mainFilePath = join3(mainDir, fileName);
-      if (!await skipCopy(fileName, mainFilePath, dirent))
+      if (!await skipCopy(fileName, mainFilePath, dirent) || /node_modules/.test(mainFilePath))
         continue;
       const fileExt = fileName.split(".").pop();
+      if (fileName === "$data.json") {
+        const data = JSON.parse(await readFile(join3(dir, fileName), "utf8"));
+        addMetaFiles(...data?.metaFiles ?? []);
+        continue;
+      }
       try {
         await writeFile(mainFilePath, await (async () => {
           switch (fileExt) {
@@ -219,10 +227,13 @@ async function mergeDirs(mainDir, ...dirs) {
   }
 }
 async function mergeJson(...files) {
-  const objects = [];
-  for (const file of files) {
-    objects.push(JSON.parse(await readFile(file, "utf8")));
-  }
+  const objects = await Promise.all(files.map(async (file) => {
+    try {
+      return await readFile(file, "utf8").then(JSON.parse);
+    } catch (e) {
+      throw new Error(`Failed to require "${file}"`, e);
+    }
+  }));
   try {
     const merged = deepMerge(...objects);
     return JSON.stringify(merged, null, 2);
@@ -275,10 +286,6 @@ if ((await readdir3(themePath)).length > 0) {
 }
 await mergeDirs(themePath, baseTemplate, languageTemplate, ...extrasTemplates);
 spinner2.message("Replacing metadata...");
-if (registeredOpts.language.value === "scss")
-  metaFiles.push("src/common/vars.scss");
-if (registeredOpts.extras.value.includes("dot-github-folder"))
-  metaFiles.push(".github/CODEOWNERS");
 for (const file of metaFiles) {
   const filePath = join4(themePath, file);
   if (!exists2(filePath))

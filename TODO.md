@@ -9,6 +9,8 @@
 - [x] Figure out a good way to integrate splash screen support
 - [x] Make the client exports not be functions, instead just declare the variables in the file itself
   - [ ] (?) Undo, instead add extras like process exports
+    - CON: Can't really import the client exports and use their values (like in [replugged.js](./templates/base/scripts/utils/replugged.js))
+    - PRO: Can change logic depending on ie if the `watch` argument is set to true
 - [x] Reduce the extras for the process exports
 
 ## Main

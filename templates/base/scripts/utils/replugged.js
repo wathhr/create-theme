@@ -3,9 +3,7 @@
 
 import WebSocket from 'ws';
 import { replugged } from '../helpers/clients.js';
-
-/** @param {any[]} args */
-const log = (...args) => console.log('[Replugged Socket]', ...args);
+import log from './logger.js';
 
 /**
  * @param {WebSocket.RawData | string} text
@@ -15,7 +13,7 @@ function parse(text) {
   try {
     return JSON.parse(text.toString());
   } catch {
-    log('Invalid JSON:', text);
+    log.warn('Invalid JSON:', text);
     return null;
   }
 }
@@ -62,7 +60,7 @@ export const RepluggedSocket = await new class RepluggedSocket {
   async reload() {
     const ws = this.#ws;
     if (!ws) {
-      log('Not connected to a WebSocket.');
+      log.warn('Not connected to a WebSocket.');
       return;
     }
 
@@ -87,9 +85,9 @@ export const RepluggedSocket = await new class RepluggedSocket {
       const errorCode = message.data.error;
       const error = errorCode[0] + errorCode.slice(1)
         .toLowerCase()
-        .replace(/_/g, ' '); // TODO: Replace this with `replaceAll`
+        .replace(/_/g, ' ');
 
-      log(error);
+      throw new Error(error);
     };
 
     ws.on('message', handleMessage);

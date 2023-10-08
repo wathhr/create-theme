@@ -6,11 +6,6 @@ const __dirname = dirname(__filename);
 
 export const root = join(__dirname, '..');
 
-export const metaFiles = [
-  'index.json',
-  'theme.config.json',
-];
-
 export const configKeys = [
   'name',
   'author',
@@ -18,3 +13,10 @@ export const configKeys = [
   'version',
   'inputFile',
 ];
+
+export const metaFiles = [
+  'index.json',
+  'theme.config.json',
+];
+
+export const addMetaFiles = (...files: string[]) => metaFiles.push(...files);

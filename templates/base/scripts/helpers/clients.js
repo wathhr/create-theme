@@ -96,7 +96,16 @@ export const replugged = {
     if (splashContent) await fs.writeFile(join(tmpDir, 'splash.css'), splashContent);
   },
   async postRun() {
-    // TODO: The asar file is being used while replugged is opened, a workaround might be to just copy the folder when building?
+    // TODO: The asar file is being used while replugged is opened so we can't just overwrite it
+    // IDEA: A workaround might be to just copy the folder itself rather than the asar file
+    //       ^ That would mean this would need to be done on the `compile` script
+    //         because we need to copy the temporary directory (unpacking the asar
+    //         file would be mega dumb & inefficient). But that wouldn't necessarily
+    //         be "compiling" per say, so it makes more sense for it to be here.
+    //         The problem is that the temporary directory gets deleted right after
+    //         the `compile` script is run so that's not great 🤷
+    //         Fin.
+
     // const repluggedPath = join((() => {
     //   switch (process.platform) {
     //     case 'win32': return join(process.env.APPDATA ?? '');

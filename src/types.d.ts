@@ -6,6 +6,10 @@ type OptionsType = typeof options;
 type ExtraOptionDataType = typeof extraOptionData;
 export type ArgumentValue = string | boolean | (string | boolean)[];
 
+export type templateData = {
+  metaFiles?: string[],
+};
+
 export type ExtraOptionData<T extends keyof OptionsType> = {
   // TODO: Make this less hacky (remove GetPropDefault)
   default: GetPropDefault<OptionsType[T], 'multiple', false> extends true

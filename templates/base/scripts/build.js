@@ -3,11 +3,10 @@
 /** @typedef {import('./types').ClientExport} ClientExport */
 /** @typedef {import('./types').PostprocessExport} PostprocessExport */
 /** @typedef {import('./types').PreprocessExport} PreprocessExport */
-/** @typedef {import('@schemastore/package').JSONSchemaForNPMPackageJsonFiles} JSONSchemaForNPMPackageJsonFiles */
 
 import { createRequire } from 'module';
-import { dirname, join } from 'path';
 import { createWriteStream, existsSync } from 'fs';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdir, readFile, realpath, rm, writeFile } from 'fs/promises';
 import { parseArgs } from 'util';
