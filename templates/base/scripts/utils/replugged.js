@@ -44,15 +44,15 @@ export const RepluggedSocket = await new class RepluggedSocket {
   #tryPort(port) {
     const ws = new WebSocket(`ws://127.0.0.1:${port}/?v=1&client_id=REPLUGGED-${this.#num++}`);
     return new Promise((resolve, reject) => {
-      // TODO: Remove event listener when done.
-      ws.on('message', (data) => {
+      /** @param {WebSocket.RawData} data */
+      const handleMessage = (data) => {
         const message = parse(data);
         if (message?.evt !== 'READY') return;
 
+        ws.off('message', handleMessage);
         resolve(ws);
-      });
-
-      // 🧌
+      };
+      ws.on('message', handleMessage);
       ws.onerror = ws.onclose = reject;
     });
   }
