@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@schemastore/package": "^0.0.10",
-    "@types/node": "~18.18.1",
+    "@types/node": "~18.18.4",
     "ws": "^8.14.2"
   }
 }
