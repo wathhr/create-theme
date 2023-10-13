@@ -1,5 +1,5 @@
 {
-  "name": "@walter-org/create-theme",
+  "name": "@wathhr/create-theme",
   "author": "wathhr",
   "version": "0.0.1",
   "description": "A template for creating Discord themes.",
@@ -9,9 +9,11 @@
     "lint": "eslint .",
     "test": "node dist/bin.js",
     "build": "node scripts/build.js",
-    "updateDeps": "./scripts/updateDeps.ps1",
+    "installNodeModules": "./scripts/runInAll.ps1 install",
+    "updateNodeModules": "./scripts/runInAll.ps1 update",
+    "removeNodeModules": "./scripts/runInAll.ps1 uninstall",
     "schema": "ts-json-schema-generator --path src/types.d.ts --type ThemeConfig -f tsconfig.json > dist/schema.json",
-    "prepublish": "npm run build && npm run schema"
+    "prepublish": "npm run installNodeModules && npm run build && npm run schema && npm run removeNodeModules"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.2",

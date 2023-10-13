@@ -182,7 +182,7 @@ async function mergeDirs(mainDir, ...dirs) {
     const extension = file.split(".").pop();
     const shouldSkip = (
       // Skip if:
-      file.endsWith("$data.json") || // the name of the file is '$data.json'
+      file.endsWith("$data.json") || // the name of the file is `$data.json`
       /node_modules/.test(mainFilePath) || //  OR it's in node_modules
       specialExts.includes(extension) && //  OR it has a special extension
       (stat ?? await lstat(file)).isFile() && // AND it's a file
