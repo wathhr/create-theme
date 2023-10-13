@@ -26,7 +26,11 @@ ForEach ($PM in $PackageManagers) {
 Push-Location;
 
 $TemplatesFolder = Join-Path $PSScriptRoot "../templates";
-$Folders = Get-ChildItem -LiteralPath $TemplatesFolder -Directory -Depth 1; # TODO: Filter this
+$Folders = Get-ChildItem -LiteralPath $TemplatesFolder -Directory -Depth 1 | Where-Object {
+  Get-ChildItem -LiteralPath $_.FullName -Depth 0 -Filter "package.json" |
+    Get-Content |
+    Select-String -Pattern "dependencies";
+};
 If ($Type -ne "uninstall") {
   $Folders = ,(Join-Path $PSScriptRoot "..") + $Folders;
 }
