@@ -11,7 +11,6 @@ const specialExts = [
 ] as const;
 
 export async function mergeDirs(mainDir: string, ...dirs: string[]) {
-  // TODO: Skip node_modules
   async function skipCopy(file: string, mainFilePath: string, stat?: Dirent): Promise<boolean> {
     const extension = file.split('.').pop();
     const shouldSkip = (                                         // Skip if:

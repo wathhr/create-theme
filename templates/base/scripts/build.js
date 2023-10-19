@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // @ts-check
+/** @typedef {import('./types').Args} Args */
 /** @typedef {import('./types').ClientExport} ClientExport */
 /** @typedef {import('./types').PostprocessExport} PostprocessExport */
 /** @typedef {import('./types').PreprocessExport} PreprocessExport */
@@ -66,14 +67,14 @@ const { values: args, positionals } = parseArgs({
   },
 });
 
-const defaults = {
+/** @type {Args} */
+export const defaults = {
   input: positionals.at(-1) ?? join(root, config.inputFile),
   splashInput: config.splashInputFile ? join(root, config.splashInputFile) : undefined,
   output: join(root, 'dist/'),
   client: args.watch ? ['default'] : ['all'],
-  watch: false
+  watch: false,
 };
-/** @type {Required<typeof defaults>} */
 const values = {
   ...defaults,
   ...Object.fromEntries(Object.entries(args).filter(([_, value]) => value !== undefined)),

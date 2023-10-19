@@ -17,8 +17,16 @@ export type ThemeConfig = {
   features?: number,
 };
 
+export type Args = {
+  input: string,
+  splashInput?: string,
+  output: string,
+  client: string[],
+  watch: boolean,
+};
+
 type Extras = {
-  args: Record<string, any>, // TODO: Improve type
+  args: Args,
   clientExport: ClientExport,
 };
 
@@ -34,7 +42,9 @@ export type ClientExport = {
   name: string,
   fileName: string,
   splash?: boolean,
-  postRun?: () => void | Promise<void>,
+  postRun?(): void | Promise<void>,
+
+  // lightningcss stuff
   drafts?: Drafts,
   /** @see {@link https://lightningcss.dev/transpilation.html#feature-flags} for further information. */
   features?: number,
