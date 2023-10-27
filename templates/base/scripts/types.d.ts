@@ -2,19 +2,31 @@ import { Drafts } from 'lightningcss';
 
 export type ThemeConfig = {
   $schema?: string,
+  // common meta
+  name: string,
   author: string,
   description: string,
-  inputFile: string,
-  name: string,
-  paths?: Record<string, string[]>,
-  splashInputFile?: string,
-  targets?: string | readonly string[],
   version: string,
+
+  // code-related
+  inputFile: string,
+  splashInputFile?: string,
+  paths?: Record<string, string[]>,
+
+  // auto-install related
+  autoInstall?: boolean | OptionalArray<keyof ThemeConfig['clientDist']>,
+  clientDist?: Record<
+    // TODO: Make this use the exports of the `./helpers/clients.js` file somehow
+    'betterDiscord' | 'stylus' | 'replugged' | 'popcorn' | string,
+    string
+  >,
 
   // lightningcss stuff
   drafts?: Drafts,
   /** @see {@link https://lightningcss.dev/transpilation.html#feature-flags} for further information. */
   features?: number,
+  /** @see {@link https://github.com/browserslist/browserslist#full-list} for further information. */
+  targets?: string | readonly string[],
 };
 
 export type Args = {
@@ -67,9 +79,11 @@ type archiveTypes = {
    *   await fs.writeFile(join(tmpDir, 'dist.css'), content);
    * }
    */
-  compile(data: { content: string, splashContent?: string, tmpDir: string }): void | Promise<void>,
+  compile(data: { content: string, splashContent?: string, tmpDir: string; }): void | Promise<void>,
 };
 type fileTypes = {
   type: 'file',
   compile(content: string): string,
 };
+
+type OptionalArray<T> = T | T[];
