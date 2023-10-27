@@ -1,24 +1,17 @@
 #!/bin/false
-
 // @ts-check
 /** @typedef {import('../types').ClientExport} ClientExport */
 /** @typedef {import('@schemastore/package').JSONSchemaForNPMPackageJsonFiles} JSONSchemaForNPMPackageJsonFiles */
 
 import fs from 'fs/promises';
 import { createRequire } from 'module';
-import { dirname, join } from 'path';
-import { existsSync } from 'fs';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 
 const require = createRequire(import.meta.url);
 /** @type {Required<import('../types').ThemeConfig>} */
 const config = require('../../theme.config.json');
 /** @type {JSONSchemaForNPMPackageJsonFiles} */
 const pkg = require('../../package.json');
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const root = join(__dirname, '../../');
 
 /** @type {ClientExport} */
 export const betterDiscord = {
@@ -96,32 +89,6 @@ export const replugged = {
     if (splashContent) await fs.writeFile(join(tmpDir, 'splash.css'), splashContent);
   },
   async postRun() {
-    // TODO: The asar file is being used while replugged is opened so we can't just overwrite it
-    // IDEA: A workaround might be to just copy the folder itself rather than the asar file
-    //       ^ That would mean this would need to be done on the `compile` script
-    //         because we need to copy the temporary directory (unpacking the asar
-    //         file would be mega dumb & inefficient). But that wouldn't necessarily
-    //         be "compiling" per say, so it makes more sense for it to be here.
-    //         The problem is that the temporary directory gets deleted right after
-    //         the `compile` script is run so that's not great 🤷
-    //         Fin.
-
-    // const repluggedPath = join((() => {
-    //   switch (process.platform) {
-    //     case 'win32': return join(process.env.APPDATA ?? '');
-    //     case 'darwin': return join(process.env.HOME ?? '', 'Library', 'Application Support');
-    //     default: {
-    //       if (process.env.XDG_CONFIG_HOME) return join(process.env.XDG_CONFIG_HOME);
-    //       return join(process.env.HOME ?? '', '.config');
-    //     }
-    //   }
-    // })(), 'replugged');
-    // if (!existsSync(repluggedPath)) return console.warn('Replugged folder not found. Skipping installation and reload.');
-
-    // const filePath = join(repluggedPath, 'themes', replugged.fileName);
-    // if (existsSync(filePath)) await fs.rm(filePath, { force: true });
-    // fs.copyFile(join(root, 'dist', replugged.fileName), filePath);
-
     const socket = (await import('../utils/replugged.js')).default;
     if (socket) {
       await socket.reload();

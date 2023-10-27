@@ -7,9 +7,9 @@
 
 import { createRequire } from 'module';
 import { createWriteStream, existsSync } from 'fs';
-import { dirname, join } from 'path';
+import { basename, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { mkdir, readFile, realpath, rm, writeFile } from 'fs/promises';
+import { copyFile, mkdir, readFile, realpath, rm, writeFile } from 'fs/promises';
 import { parseArgs } from 'util';
 import { tmpdir } from 'os';
 import archiver from 'archiver';
@@ -21,20 +21,49 @@ import { debounce } from 'throttle-debounce';
 import log from './utils/logger.js';
 
 const require = createRequire(import.meta.url);
-/** @type {Required<import('./types').ThemeConfig>} */
-const config = require('../theme.config.json');
-const configKeys = [
+/** @type {import('./types').ThemeConfig} */
+const baseConfig = require('../theme.config.json');
+const requiredConfigKeys = [
   'name',
   'author',
   'description',
   'version',
   'inputFile',
 ];
-for (const key of configKeys) {
-  if (key in config) continue;
+for (const key of requiredConfigKeys) {
+  if (key in baseConfig) continue;
   log.error(`"${key}" is missing from your "theme.config.json"`);
   process.exit(1);
 }
+
+const config = {
+  autoInstall: ['betterDiscord', 'replugged'],
+  ...baseConfig,
+  // this is placed after `...baseConfig` so the keys don't get overwritten if just `clientDist` is specified
+  clientDist: {
+    betterDiscord: join((() => {
+      switch (process.platform) {
+        case 'win32': return join(process.env.APPDATA ?? '');
+        case 'darwin': return join(process.env.HOME ?? '', 'Library', 'Application Support');
+        default: {
+          if (process.env.XDG_CONFIG_HOME) return process.env.XDG_CONFIG_HOME;
+          return join(process.env.HOME ?? '', '.config');
+        }
+      }
+    })(), 'BetterDiscord', 'themes'),
+    replugged: join((() => {
+      switch (process.platform) {
+        case 'win32': return join(process.env.APPDATA ?? '');
+        case 'darwin': return join(process.env.HOME ?? '', 'Library', 'Application Support');
+        default: {
+          if (process.env.XDG_CONFIG_HOME) return process.env.XDG_CONFIG_HOME;
+          return join(process.env.HOME ?? '', '.config');
+        }
+      }
+    })(), 'replugged', 'themes'),
+    ...baseConfig.clientDist,
+  },
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -68,21 +97,19 @@ const { values: args, positionals } = parseArgs({
 });
 
 /** @type {Args} */
-export const defaults = {
+const values = {
   input: positionals.at(-1) ?? join(root, config.inputFile),
   splashInput: config.splashInputFile ? join(root, config.splashInputFile) : undefined,
   output: join(root, 'dist/'),
   client: args.watch ? ['default'] : ['all'],
   watch: false,
-};
-const values = {
-  ...defaults,
   ...Object.fromEntries(Object.entries(args).filter(([_, value]) => value !== undefined)),
 };
 
 // Ensure the output directory exists
 if (!existsSync(values.output)) await mkdir(values.output, { recursive: true });
 
+/** @type {Record<string, ClientExport>} */
 const clientExports = await import('./helpers/clients.js');
 if (values.client.includes('all')) values.client = Object.keys(clientExports);
 
@@ -114,9 +141,27 @@ if (values.watch) {
  */
 async function build(client) {
   if (!(client in clientExports)) throw new Error(`No export for client "${client}"`);
-  /** @type {ClientExport} */
   const clientExport = clientExports[client];
-  const outputLocation = join(values.output, clientExport.fileName);
+
+  /**
+   * Places the specified file into the client's output directory (based on `theme.config.json`'s `clientDist`)
+   * @param {string} client The export name of the client
+   * @param {string} file The theme file
+   */
+  async function install(client, file) {
+    if (!(client in (config.clientDist ?? {}))) {
+      log.warn(`Skipping installation for client ${clientExport.name} because no directory is specified.`);
+      return;
+    }
+
+    const directory = config.clientDist[client];
+    if (!(existsSync(directory))) {
+      log.warn(`Skipping installation for client ${clientExport.name} because the theme folder does not exist.`);
+      return;
+    }
+
+    await copyFile(file, join(directory, basename(file)));
+  }
 
   /** @type {{ preprocess?: PreprocessExport, postprocess?: PostprocessExport }} */
   const {
@@ -143,7 +188,7 @@ async function build(client) {
       const preprocessed = await preprocess(values.input, extras);
       return await postprocess(values.input, preprocessed, extras);
     } catch (e) {
-      log.error('Failed to compile source code.', e);
+      log.error('Failed to compile source code.', e.message);
       process.exit(1);
     }
   })();
@@ -155,11 +200,13 @@ async function build(client) {
       const preprocessed = await preprocess(values.splashInput, extras);
       return await postprocess(values.splashInput, preprocessed, extras);
     } catch (e) {
-      log.error('Failed to compile splash source code.', e);
+      log.error('Failed to compile splash source code.', e.message);
       process.exit(1);
     }
   })();
 
+  let tmpDir = ''; // used by `asar` and `zip` output types
+  const outputLocation = join(values.output, clientExport.fileName);
   try {
     switch (clientExport.type) {
       case 'file': {
@@ -167,8 +214,8 @@ async function build(client) {
       } break;
 
       case 'asar': {
-        const tmpDir = join(await realpath(tmpdir()), client);
-        mkdir(tmpDir, { recursive: true });
+        tmpDir = join(await realpath(tmpdir()), client);
+        await mkdir(tmpDir, { recursive: true });
         await clientExport.compile({
           content: css,
           splashContent: splashCss,
@@ -176,12 +223,11 @@ async function build(client) {
         });
 
         await asar.createPackage(tmpDir, outputLocation);
-        await rm(tmpDir, { recursive: true, force: true });
       } break;
 
       case 'zip': {
-        const tmpDir = join(await realpath(tmpdir()), client);
-        mkdir(tmpDir, { recursive: true });
+        tmpDir = join(await realpath(tmpdir()), client);
+        await mkdir(tmpDir, { recursive: true });
         await clientExport.compile({
           content: css,
           splashContent: splashCss,
@@ -198,19 +244,28 @@ async function build(client) {
           archive.directory(tmpDir, false);
           archive.finalize();
         });
-
-        await rm(tmpDir, { recursive: true, force: true });
       } break;
     }
   } catch (e) {
-    throw new Error(`Failed to compile for client ${clientExport.name}: ${e}`);
+    throw new Error(`Failed to compile for client ${clientExport.name}: ${e.message}`);
   }
+
+  if (
+    config.autoInstall === true ||
+    (typeof config.autoInstall === 'string' && config.autoInstall === client) ||
+    (Array.isArray(config.autoInstall) && config.autoInstall.includes(client))
+  ) await install(client, outputLocation).catch((e) => {
+    throw new Error(`Failed to install for client ${clientExport.name}: ${e.message}`);
+  });
 
   try {
     await clientExport.postRun?.();
   } catch (e) {
-    log.warn(`Failed to run postrun script for client ${clientExport.name}: ${e}`);
+    log.warn(`Failed to run postrun script for client ${clientExport.name}: ${e.message}`);
   }
 
   log.success(`Built ${clientExport.name} successfully.`);
+
+  // cleanup
+  if (tmpDir) rm(tmpDir, { recursive: true, force: true });
 }
