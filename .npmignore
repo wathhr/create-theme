@@ -1,4 +1,4 @@
-templates/languages/*/scripts/types.d.ts
+templates/languages/*/scripts/types.ts
 
 # node_modules still gets packed for `./templates/languages/css` for some reason?
 **/node_modules/
