@@ -13,9 +13,16 @@
     - PRO: Can change logic depending on ie if the `watch` argument is set to true
 - [x] Reduce the extras for the process exports
 - [ ] Support stylus variables
+- Sass
+  - [x] (?) Change to using the deprecated [`render`](https://sass-lang.com/documentation/js-api/functions/render/) instead of [`compile`](https://sass-lang.com/documentation/js-api/functions/compile/)
+    - PRO: More extensible
+      - Can implement global variables
+      - Can implement file globbing
+    - CON: Deprecated (?)
 
 ## Main
 - [ ] Add support for arrays in meta replacing (ie multiple authors)
 - [x] Use [clack](https://github.com/natemoo-re/clack/) instead of readline
 - [ ] ~~Use patch files instead of overwriting~~
 - [ ] Optimize file structure depending on if the template is generated in a client theme folder
+- [ ] Add tests for everything 😵‍💫

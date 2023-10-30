@@ -28,7 +28,6 @@ export const betterDiscord = {
     ` * @version ${config.version}`,
     pkg.license ? ` * @license ${pkg.license}` : '',
     ' */',
-    '',
     content
   ].filter(Boolean).join('\n'),
 };
@@ -49,7 +48,6 @@ export const stylus = {
     `@version ${config.version}`,
     pkg.license ? `@license ${pkg.license}` : '',
     '==/UserStyle== */',
-    '',
     '@-moz-document regexp(\'^https?:\\/\\/(?:(?:ptb|canary)\\.)?discord\\.com\\/(app|activity|channels((?:\\/\\d+)+|\\/@me(\\/\\d*)?)|store(?:\\/skus.*)?|library(?:\\/settings)?|guild-discovery|login|oauth2\\/authorize.*)\\/?$\') {',
     content.replace(/^/gm, '  '),
     '}'

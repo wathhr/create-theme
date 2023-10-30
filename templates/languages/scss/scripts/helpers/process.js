@@ -2,21 +2,10 @@
 /** @typedef {import('../types').PreprocessExport} PreprocessExport */
 /** @typedef {import('../types').PostprocessExport} PostprocessExport */
 
-import { createRequire } from 'module';
-import { dirname, join } from 'path';
-import { existsSync, statSync } from 'fs';
-import { fileURLToPath, pathToFileURL } from 'url';
-import sass, { compile } from 'sass';
-const require = createRequire(import.meta.url);
-
-/** @type {import('../types').ThemeConfig} */
-const config = require('../../theme.config.json');
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const root = join(__dirname, '../..');
-
-const aliasRegex = new RegExp(`^(?<main>${Object.keys(config.paths ?? {}).join('|')})(?<path>.*)`);
+import { join } from 'path';
+import fg from 'fast-glob';
+import { renderSync, types } from 'sass';
+import resolveAlias from '../utils/resolveAlias.js';
 
 /**
  * @param {string} string
@@ -31,49 +20,58 @@ function stringToRegex(string) {
 
 /** @type {PreprocessExport} */
 export const preprocess = (file, { args }) => {
-  const { css } = compile(file, {
+  const { css } = renderSync({
+    file,
     functions: {
-      'regex-test($string, $regex)': (args) => {
-        const params = args.map((p) => p.toString().replace(/^['"]|['"]$/g, ''));
-        const string = params[0];
-        const regex = stringToRegex(params[1]);
+      'regex-test($string, $regex)': ($string, $regex) => {
+        const string = $string.toString().replace(/^['"]|['"]$/g, '');
+        const regex = stringToRegex($regex.toString().replace(/^['"]|['"]$/g, ''));
 
-        const match = regex.test(string);
-        return match ? sass.sassTrue : sass.sassFalse;
+        return types.Boolean[regex.test(string).toString().toUpperCase()];
       },
-      'regex-replace($string, $regex, $replace)': (args) => {
-        const params = args.map((p) => p.toString().replace(/^['"]|['"]$/g, ''));
-        const string = params[0];
-        const regex = stringToRegex(params[1]);
-        const replace = params[2];
+      'regex-replace($string, $regex, $replace)': ($string, $regex, $replace) => {
+        const string = $string.toString().replace(/^['"]|['"]$/g, '');
+        const regex = stringToRegex($regex.toString().replace(/^['"]|['"]$/g, ''));
+        const replace = $replace.toString().replace(/^['"]|['"]$/g, '');
 
-        const replaced = string.replace(regex, replace);
-        return new sass.SassString(replaced);
+        return new types.String(string.replace(regex, replace));
       },
     },
-    importers: [{
-      findFileUrl(url) {
-        if (!config.paths) return null;
+    importer: [
+      // NOTE: sass importers don't "stack", instead sass just uses the first
+      //       importer that returns a valid path, that means we can't easily
+      //       implement aliases and still use [node-sass-magic-importer](https://www.npmjs.com/package/node-sass-magic-importer)
+      (url, prev) => {
+        const resolvedUrl = resolveAlias(url);
+        const oldUrl = url;
+        url = (resolvedUrl ?? url).replace(/\\/g, '/');
 
-        const match = url.match(aliasRegex);
-        const mainGroup = match?.groups?.main;
-        if (!match || !mainGroup) return null;
-        if (!(mainGroup in (config.paths ?? {}))) return null;
-        const pathGroup = match.groups?.path;
+        if (fg.isDynamicPattern(url)) {
+          const globPath = join(prev, '..', url).replace(/\\/g, '/');
+          const glob = fg.globSync([
+            url.replace(/\\/g, '/'),
+            globPath,
+          ]);
 
-        const possiblePaths = config.paths[mainGroup]
-          .map((path) => join(root, path, pathGroup ?? ''))
-          .filter((path) => existsSync(path) && statSync(path).isFile());
+          if (glob.length === 0) return null;
 
-        if (possiblePaths.length === 0) throw `No valid paths for ${url}`;
+          return {
+            contents: glob
+              .map((path) => `@import '${path}';`)
+              .join('\n'),
+          };
+        }
 
-        return new URL(pathToFileURL(possiblePaths[0]));
-      }
-    }],
-    style: (process.env.NODE_ENV ? process.env.NODE_ENV === 'development' : !args.watch)
+        if (resolvedUrl === oldUrl) return null;
+        return {
+          file: url,
+        };
+      },
+    ],
+    outputStyle: (process.env.NODE_ENV ? process.env.NODE_ENV === 'development' : !args.watch)
       ? 'expanded'
       : 'compressed',
   });
 
-  return css;
+  return css.toString();
 };
