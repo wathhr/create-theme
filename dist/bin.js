@@ -179,13 +179,16 @@ var specialExts = [
 ];
 async function mergeDirs(mainDir, ...dirs) {
   async function skipCopy(file, mainFilePath, stat) {
+    stat ??= await lstat(file);
+    if (stat.isSymbolicLink())
+      return true;
     const extension = file.split(".").pop();
     const shouldSkip = (
       // Skip if:
       file.endsWith("$data.json") || // the name of the file is `$data.json`
-      /node_modules/.test(mainFilePath) || //  OR it's in node_modules
+      mainFilePath.includes("node_modules") || //  OR it's (in) node_modules
       specialExts.includes(extension) && //  OR it has a special extension
-      (stat ?? await lstat(file)).isFile() && // AND it's a file
+      stat.isFile() && // AND it's a file
       await exists(mainFilePath)
     );
     return shouldSkip;

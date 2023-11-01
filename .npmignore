@@ -1,4 +1,5 @@
 templates/languages/*/scripts/types.ts
+templates/languages/*/scripts/utils/
 
 # node_modules still gets packed for `./templates/languages/css` for some reason?
 **/node_modules/

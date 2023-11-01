@@ -4,10 +4,11 @@
 
 import { createRequire } from 'module';
 import { dirname, join } from 'path';
-import { existsSync, readFileSync, statSync } from 'fs';
+import { lstatSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import browserslist from 'browserslist';
 import { browserslistToTargets, bundleAsync } from 'lightningcss';
+import resolveAlias from '../utils/resolveAlias.js';
 const require = createRequire(import.meta.url);
 
 /** @type {import('../types').ThemeConfig} */
@@ -19,8 +20,6 @@ const root = join(__dirname, '../..');
 
 /** @type {PreprocessExport} */
 export const preprocess = async (file, { args, clientExport }) => {
-  const aliasRegex = new RegExp(`^(?<main>${Object.keys(config.paths ?? {}).join('|')})(?<path>.*)`);
-
   const { code } = await bundleAsync({
     filename: file,
     minify: process.env.NODE_ENV ? process.env.NODE_ENV === 'development' : !args.watch,
@@ -31,22 +30,24 @@ export const preprocess = async (file, { args, clientExport }) => {
     analyzeDependencies: true,
     resolver: {
       resolve(specifier, from) {
-        const path = join(dirname(from), specifier);
-        if (!config.paths) return path;
+        let path = join(dirname(from), specifier);
 
-        const match = specifier.match(aliasRegex);
-        const mainGroup = match?.groups?.main;
-        if (!match || !mainGroup) return path;
-        if (!(mainGroup in (config.paths ?? {}))) return path;
-        const pathGroup = match.groups?.path;
+        const resolvedPath = resolveAlias(path);
+        const oldPath = path;
+        path = (resolvedPath ?? path);
 
-        const possiblePaths = config.paths[mainGroup]
-          .map((path) => join(root, path, pathGroup ?? ''))
-          .filter((path) => existsSync(path) && statSync(path).isFile());
+        try {
+          if (lstatSync(path).isDirectory()) {
+            const indexFiles = ['index.css', 'main.css'];
+            for (const file of indexFiles) {
+              const filePath = join(path, file);
+              if (existsSync(filePath)) return filePath;
+            }
+          }
+        } catch {/* Omitted */}
 
-        if (possiblePaths.length === 0) throw `No valid paths for ${specifier}`;
-
-        return possiblePaths[0];
+        if (resolvedPath === oldPath) return oldPath;
+        return path;
       }
     }
   });
@@ -55,4 +56,4 @@ export const preprocess = async (file, { args, clientExport }) => {
 };
 
 /** @type {PostprocessExport} */
-export const postprocess = (file) => readFileSync(file, 'utf8'); // disabled postprocess export
+export const postprocess = (_, css) => css; // disables postprocess export

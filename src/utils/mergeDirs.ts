@@ -1,5 +1,5 @@
 import { copy, exists } from 'fs-extra';
-import { Dirent } from 'fs';
+import { Dirent, Stats } from 'fs';
 import { join, relative } from 'path';
 import { lstat, readFile, readdir, writeFile } from 'fs/promises';
 import deepMerge from 'ts-deepmerge';
@@ -11,13 +11,17 @@ const specialExts = [
 ] as const;
 
 export async function mergeDirs(mainDir: string, ...dirs: string[]) {
-  async function skipCopy(file: string, mainFilePath: string, stat?: Dirent): Promise<boolean> {
+  async function skipCopy(file: string, mainFilePath: string, stat?: Dirent | Stats): Promise<boolean> {
+    stat ??= await lstat(file);
+
+    if (stat.isSymbolicLink()) return true; // 🧌
+
     const extension = file.split('.').pop();
     const shouldSkip = (                                         // Skip if:
       file.endsWith('$data.json') ||                             // the name of the file is `$data.json`
-      /node_modules/.test(mainFilePath) ||                       //  OR it's in node_modules
+      mainFilePath.includes('node_modules') ||                   //  OR it's (in) node_modules
       ((specialExts as readonly string[]).includes(extension) && //  OR it has a special extension
-      (stat ?? await lstat(file)).isFile() &&                    // AND it's a file
+      stat.isFile() &&                                           // AND it's a file
       await exists(mainFilePath))                                // AND it's already in the main folder
     );
 

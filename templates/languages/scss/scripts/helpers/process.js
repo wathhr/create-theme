@@ -7,10 +7,7 @@ import fg from 'fast-glob';
 import { renderSync, types } from 'sass';
 import resolveAlias from '../utils/resolveAlias.js';
 
-/**
- * @param {string} string
- * @returns {RegExp}
- */
+/** @param {string} string */
 function stringToRegex(string) {
   const flagRegex = /(?<=\/)[gmiyusd]*$/;
   const expression = string.replace(flagRegex, '').slice(1).slice(0, -1);
