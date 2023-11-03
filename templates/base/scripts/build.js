@@ -145,10 +145,9 @@ async function build(client) {
 
   /**
    * Places the specified file into the client's output directory (based on `theme.config.json`'s `clientDist`)
-   * @param {string} client The export name of the client
    * @param {string} file The theme file
    */
-  async function install(client, file) {
+  async function install(file) {
     if (!(client in (config.clientDist ?? {}))) {
       log.warn(`Skipping installation for client ${clientExport.name} because no directory is specified.`);
       return;
@@ -194,7 +193,7 @@ async function build(client) {
   })();
 
   const splashCss = await (async () => {
-    if (!values.splashInput) return undefined;
+    if (!values.splashInput || !clientExport.splash) return undefined;
 
     try {
       const preprocessed = await preprocess(values.splashInput, extras);
@@ -254,7 +253,7 @@ async function build(client) {
     config.autoInstall === true ||
     (typeof config.autoInstall === 'string' && config.autoInstall === client) ||
     (Array.isArray(config.autoInstall) && config.autoInstall.includes(client))
-  ) await install(client, outputLocation).catch((e) => {
+  ) await install(outputLocation).catch((e) => {
     throw new Error(`Failed to install for client ${clientExport.name}: ${e.message}`);
   });
 

@@ -72,12 +72,6 @@ type archiveTypes = {
    * @param data.content The compiled css
    * @param data.splashContent The compiled css for the splashscreen (only available when `splash` is truthy & `splashInputFile` is set)
    * @param data.tmpDir A temporary directory
-   *
-   * @example
-   * async compile({ content, root, tmpDir }) {
-   *   await fs.copyFile(join(root, 'manifest.json'), join(tmpDir, 'manifest.json'));
-   *   await fs.writeFile(join(tmpDir, 'dist.css'), content);
-   * }
    */
   compile(data: { content: string, splashContent?: string, tmpDir: string; }): void | Promise<void>,
 };
