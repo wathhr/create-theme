@@ -19,10 +19,13 @@
       - Can implement global variables
       - Can implement file globbing
     - CON: Deprecated (?)
+  - [ ] Figure out a better way to create functions using `render`
 
 ## Main
 - [ ] Add support for arrays in meta replacing (ie multiple authors)
 - [x] Use [clack](https://github.com/natemoo-re/clack/) instead of readline
+  - [ ] Replace clack with something else (possibly something custom?)
 - [ ] ~~Use patch files instead of overwriting~~
 - [ ] Optimize file structure depending on if the template is generated in a client theme folder
-- [ ] Add tests for everything 😵‍💫
+- [ ] ~~Add tests for everything 😵‍💫~~
+  - Overly complex for this project

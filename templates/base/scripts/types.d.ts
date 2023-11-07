@@ -15,11 +15,7 @@ export type ThemeConfig = {
 
   // auto-install related
   autoInstall?: boolean | OptionalArray<keyof ThemeConfig['clientDist']>,
-  clientDist?: Record<
-    // TODO: Make this use the exports of the `./helpers/clients.js` file somehow
-    'betterDiscord' | 'stylus' | 'replugged' | 'popcorn' | string,
-    string
-  >,
+  clientDist?: Record<string, string>,
 
   // lightningcss stuff
   drafts?: Drafts,
@@ -39,6 +35,7 @@ export type Args = {
 
 type Extras = {
   args: Args,
+  clientId: string,
   clientExport: ClientExport,
 };
 

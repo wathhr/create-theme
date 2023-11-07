@@ -16,9 +16,10 @@ function stringToRegex(string) {
 }
 
 /** @type {PreprocessExport} */
-export const preprocess = (file, { args }) => {
+export const preprocess = (file, { args, clientId }) => {
   const { css } = compile(file, {
     functions: {
+      'client': () => new sass.SassString(clientId),
       'regex-test($string, $regex)': (args) => {
         const params = args.map((p) => p.toString().replace(/^['"]|['"]$/g, ''));
         const string = params[0];

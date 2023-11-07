@@ -7,7 +7,8 @@
     @return unquote('var(--#{$theme-name}-#{join-list($name, '-')})');
   }
 
-  @return unquote('var(--#{join-list($name, '-')})');
+  // for some reason i need to do interpolation twice here, otherwise an error is thrown
+  @return unquote('var(--#{regex-replace(#{join-list($name, '-')}, '/\^--/', '')})');
 }
 
 @function v($name...) {

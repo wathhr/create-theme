@@ -177,8 +177,10 @@ async function build(client) {
     }).code.toString(),
   } = await import('./helpers/process.js');
 
+  /** @type {import('./types').Extras} */
   const extras = {
     args: values,
+    clientId: client,
     clientExport,
   };
 
