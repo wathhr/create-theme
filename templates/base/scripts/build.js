@@ -2,14 +2,15 @@
 // @ts-check
 /** @typedef {import('./types').Args} Args */
 /** @typedef {import('./types').ClientExport} ClientExport */
+/** @typedef {import('./types').Extras} Extras */
 /** @typedef {import('./types').PostprocessExport} PostprocessExport */
 /** @typedef {import('./types').PreprocessExport} PreprocessExport */
 
+import { basename, dirname, join } from 'path';
+import { copyFile, mkdir, readFile, realpath, rm, writeFile } from 'fs/promises';
 import { createRequire } from 'module';
 import { createWriteStream, existsSync } from 'fs';
-import { basename, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { copyFile, mkdir, readFile, realpath, rm, writeFile } from 'fs/promises';
 import { parseArgs } from 'util';
 import { tmpdir } from 'os';
 import archiver from 'archiver';
@@ -18,6 +19,7 @@ import browserslist from 'browserslist';
 import parcelWatcher from '@parcel/watcher';
 import { browserslistToTargets, transform } from 'lightningcss';
 import { debounce } from 'throttle-debounce';
+import { objectToProps } from '@wathhr/json-to-sass-map';
 import log from './utils/logger.js';
 
 const require = createRequire(import.meta.url);
@@ -165,23 +167,39 @@ async function build(client) {
   /** @type {{ preprocess?: PreprocessExport, postprocess?: PostprocessExport }} */
   const {
     preprocess = async (file) => await readFile(file, 'utf8'),
-    postprocess = (file, content) => transform({
-      filename: file,
-      code: Buffer.from(content),
-      minify: process.env.NODE_ENV ? process.env.NODE_ENV === 'development' : !values.watch,
-      projectRoot: root,
-      targets: browserslistToTargets(browserslist(clientExport.targets ?? 'Chrome >= 108')), // Electron v22+
-      include: clientExport.features ?? config.features ?? 0,
-      drafts: clientExport.drafts ?? config.drafts ?? {},
-      analyzeDependencies: true,
-    }).code.toString(),
+    postprocess = (file, content, { clientId, props }) => {
+      const vars = Object.keys(props).length > 0 ? objectToProps(props, {
+        prefix: config.name,
+        selector: `:not(${config.name}):root`,
+      }) + '\n\n' : '';
+
+      return (clientId === 'stylus' ? '' : vars) + transform({
+        filename: file,
+        code: Buffer.from(content),
+        minify: process.env.NODE_ENV ? process.env.NODE_ENV === 'development' : !values.watch,
+        projectRoot: root,
+        targets: browserslistToTargets(browserslist(clientExport.targets ?? 'Chrome >= 108')), // Electron v22+
+        include: clientExport.features ?? config.lightningcss.features ?? 0,
+        drafts: clientExport.drafts ?? config.lightningcss.drafts ?? {},
+        analyzeDependencies: true,
+      }).code.toString();
+    },
   } = await import('./helpers/process.js');
 
-  /** @type {import('./types').Extras} */
+  const propsLocation = join(root, 'theme.props.json');
+  /** @type {Extras['props']} */
+  const props = existsSync(propsLocation)
+    ? require(propsLocation)
+    : 'props' in config
+      ? config.props
+      : {};
+
+  /** @type {Extras} */
   const extras = {
     args: values,
     clientId: client,
     clientExport,
+    props,
   };
 
   const css = await (async () => {
@@ -211,7 +229,11 @@ async function build(client) {
   try {
     switch (clientExport.type) {
       case 'file': {
-        writeFile(outputLocation, clientExport.compile(css));
+        writeFile(outputLocation, clientExport.compile({
+          content: css,
+          splashContent: splashCss,
+          ...extras,
+        }));
       } break;
 
       case 'asar': {
@@ -221,6 +243,7 @@ async function build(client) {
           content: css,
           splashContent: splashCss,
           tmpDir,
+          ...extras,
         });
 
         await asar.createPackage(tmpDir, outputLocation);
@@ -233,6 +256,7 @@ async function build(client) {
           content: css,
           splashContent: splashCss,
           tmpDir,
+          ...extras,
         });
 
         await new Promise((resolve, reject) => {
@@ -255,12 +279,14 @@ async function build(client) {
     config.autoInstall === true ||
     (typeof config.autoInstall === 'string' && config.autoInstall === client) ||
     (Array.isArray(config.autoInstall) && config.autoInstall.includes(client))
-  ) await install(outputLocation).catch((e) => {
-    throw new Error(`Failed to install for client ${clientExport.name}: ${e.message}`);
-  });
+  )
+    await install(outputLocation)
+      .catch((e) => {
+        throw new Error(`Failed to install for client ${clientExport.name}: ${e.message}`);
+      });
 
   try {
-    await clientExport.postRun?.();
+    await clientExport.postRun?.({ tmpDir });
   } catch (e) {
     log.warn(`Failed to run postrun script for client ${clientExport.name}: ${e.message}`);
   }

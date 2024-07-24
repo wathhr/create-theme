@@ -1,9 +1,9 @@
-@use '../props.scss';
+@use '../props.scss' as *;
 @use '../vars.scss' as *;
 @use './join-list.scss' as *;
 
 @function var($name...) {
-  @if (map-get(props.$vars, $name...)) {
+  @if (map-get($vars, $name...)) {
     @return unquote('var(--#{$theme-name}-#{join-list($name, '-')})');
   }
 

@@ -1,1 +1,1 @@
-../../../base/scripts/types.d.ts
+../../../base/scripts/types.ts
